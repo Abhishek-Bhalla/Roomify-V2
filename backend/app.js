@@ -10,7 +10,7 @@ const bulkUploadRoutes = require('./routes/bulkUploadRoutes');
 const app = express();
 
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : true,
+  origin: '*',
   credentials: true
 }));
 app.use(express.json());
