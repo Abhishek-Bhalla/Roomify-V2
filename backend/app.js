@@ -9,7 +9,10 @@ const bulkUploadRoutes = require('./routes/bulkUploadRoutes');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : true,
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -25,7 +28,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
+  res.status(404).json({ success: true, message: 'Roomify Backend API is running' });
 });
 
 app.use((err, req, res, next) => {
