@@ -3,6 +3,7 @@ const Booking = require('../models/Booking');
 const Room = require('../models/Room');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 const { createNotification } = require('./notificationController');
+const { sendBookingCreatedEmail, sendBookingApprovedEmail, sendBookingRejectedEmail } = require('../utils/emailService');
 
 const checkConflict = async (roomId, date, startTime, endTime, excludeBookingId = null) => {
   const query = {
@@ -66,6 +67,20 @@ const createBooking = async (req, res, next) => {
       'booking_created',
       'Booking Request Submitted',
       `Your booking request for ${booking.roomId.name} on ${new Date(date).toLocaleDateString()} from ${startTime} to ${endTime} has been submitted and is pending approval.`
+    );
+
+    // Send confirmation email
+    await sendBookingCreatedEmail(
+      req.user.email,
+      req.user.name,
+      {
+        roomName: booking.roomId.name,
+        date: new Date(date).toLocaleDateString(),
+        startTime,
+        endTime,
+        purpose,
+        bookingId: booking.bookingId
+      }
     );
 
     return successResponse(res, { booking }, 'Booking request created successfully', 201);
@@ -133,6 +148,23 @@ const approveBooking = async (req, res, next) => {
       `Your booking request for ${booking.roomId.name} on ${new Date(booking.date).toLocaleDateString()} from ${booking.startTime} to ${booking.endTime} has been approved!`
     );
 
+    // Send approval email
+    const userEmail = typeof booking.userId === 'object' ? booking.userId.email : (await require('../models/User').findById(booking.userId)).email;
+    const userName = typeof booking.userId === 'object' ? booking.userId.name : (await require('../models/User').findById(booking.userId)).name;
+
+    await sendBookingApprovedEmail(
+      userEmail,
+      userName,
+      {
+        roomName: booking.roomId.name,
+        date: new Date(booking.date).toLocaleDateString(),
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        purpose: booking.purpose,
+        bookingId: booking.bookingId
+      }
+    );
+
     return successResponse(res, { booking }, 'Booking approved successfully');
   } catch (error) {
     next(error);
@@ -166,6 +198,24 @@ const rejectBooking = async (req, res, next) => {
       'booking_rejected',
       'Booking Rejected',
       `Your booking request for ${booking.roomId.name} on ${new Date(booking.date).toLocaleDateString()} from ${booking.startTime} to ${booking.endTime} has been rejected. Reason: ${booking.remarks}`
+    );
+
+    // Send rejection email
+    const userEmail = typeof booking.userId === 'object' ? booking.userId.email : (await require('../models/User').findById(booking.userId)).email;
+    const userName = typeof booking.userId === 'object' ? booking.userId.name : (await require('../models/User').findById(booking.userId)).name;
+
+    await sendBookingRejectedEmail(
+      userEmail,
+      userName,
+      {
+        roomName: booking.roomId.name,
+        date: new Date(booking.date).toLocaleDateString(),
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        purpose: booking.purpose,
+        bookingId: booking.bookingId,
+        remarks: booking.remarks
+      }
     );
 
     return successResponse(res, { booking }, 'Booking rejected successfully');

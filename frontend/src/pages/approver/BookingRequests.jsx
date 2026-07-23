@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Check, X, XCircle } from 'lucide-react';
+import { RefreshCw, Check, X, XCircle, Eye } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
 import Button from '../../components/common/Button';
 import { bookingAPI } from '../../services/api';
@@ -8,6 +8,7 @@ const BookingRequests = () => {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showRemarksModal, setShowRemarksModal] = useState(false);
+  const [hoveredBooking, setHoveredBooking] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [remarks, setRemarks] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
@@ -153,26 +154,44 @@ const BookingRequests = () => {
                     <td className="px-4 py-4 text-sm text-gray-700">{booking.startTime} - {booking.endTime}</td>
                     <td className="px-4 py-4"><StatusBadge status={booking.status} /></td>
                     <td className="px-4 py-4">
-                      {booking.status === 'pending' && (
-                        <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1">
+                        <div className="relative group">
                           <button
-                            onClick={() => handleApprove(booking._id)}
-                            disabled={actionLoading}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-green-50 text-green-600 transition-colors disabled:opacity-50"
-                            title="Approve"
+                            onMouseEnter={() => setHoveredBooking(booking._id)}
+                            onMouseLeave={() => setHoveredBooking(null)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 text-blue-600 transition-colors cursor-help"
+                            title="View Purpose"
                           >
-                            <Check size={16} />
+                            <Eye size={16} />
                           </button>
-                          <button
-                            onClick={() => handleReject(booking)}
-                            disabled={actionLoading}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-600 transition-colors disabled:opacity-50"
-                            title="Reject"
-                          >
-                            <X size={16} />
-                          </button>
+                          {hoveredBooking === booking._id && (
+                            <div className="absolute left-0 top-full mt-1 z-50 bg-gray-800 text-white text-sm rounded-lg p-3 w-64 shadow-lg">
+                              <p className="font-medium mb-1">Purpose:</p>
+                              <p className="text-gray-300">{booking.purpose || 'No purpose provided'}</p>
+                            </div>
+                          )}
                         </div>
-                      )}
+                        {booking.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(booking._id)}
+                              disabled={actionLoading}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-green-50 text-green-600 transition-colors disabled:opacity-50"
+                              title="Approve"
+                            >
+                              <Check size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleReject(booking)}
+                              disabled={actionLoading}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-600 transition-colors disabled:opacity-50"
+                              title="Reject"
+                            >
+                              <X size={16} />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -204,26 +223,28 @@ const BookingRequests = () => {
                 <p>{new Date(booking.date).toLocaleDateString()} • {booking.startTime} - {booking.endTime}</p>
                 <p className="text-gray-500 truncate">{booking.purpose}</p>
               </div>
-              {booking.status === 'pending' && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleApprove(booking._id)}
-                    disabled={actionLoading}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-50"
-                  >
-                    <Check size={16} />
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => handleReject(booking)}
-                    disabled={actionLoading}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
-                  >
-                    <X size={16} />
-                    Reject
-                  </button>
-                </div>
-              )}
+              <div className="flex gap-2">
+                {booking.status === 'pending' && (
+                  <>
+                    <button
+                      onClick={() => handleApprove(booking._id)}
+                      disabled={actionLoading}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-50"
+                    >
+                      <Check size={16} />
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleReject(booking)}
+                      disabled={actionLoading}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
+                    >
+                      <X size={16} />
+                      Reject
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           ))
         )}
@@ -256,6 +277,7 @@ const BookingRequests = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

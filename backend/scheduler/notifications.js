@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const Booking = require('../models/Booking');
 const Notification = require('../models/Notification');
+const { sendBookingReminderEmail } = require('../utils/emailService');
 
 const sendReminderNotification = async (booking) => {
   try {
@@ -24,6 +25,20 @@ const sendReminderNotification = async (booking) => {
       title: 'Booking Reminder',
       message: `You have a booking for ${booking.roomId.name} in 1 hour (${booking.startTime} - ${booking.endTime}). Purpose: ${booking.purpose}`
     });
+
+    // Send reminder email
+    await sendBookingReminderEmail(
+      booking.userId.email,
+      booking.userId.name,
+      {
+        roomName: booking.roomId.name,
+        date: new Date(booking.date).toLocaleDateString(),
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        purpose: booking.purpose,
+        bookingId: booking.bookingId
+      }
+    );
 
     console.log(`Reminder sent for booking ${booking._id}`);
   } catch (error) {
