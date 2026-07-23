@@ -48,7 +48,7 @@ const login = async (req, res, next) => {
 
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, employeeId } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -59,7 +59,8 @@ const register = async (req, res, next) => {
       name,
       email,
       password,
-      role: role || 'requester'
+      role: role || 'requester',
+      employeeId: employeeId || `EMP${Date.now()}`
     });
 
     const token = generateToken(user._id);
@@ -97,7 +98,8 @@ const registerValidation = [
   body('name').trim().notEmpty().withMessage('Name is required'),
   body('email').isEmail().withMessage('Please provide a valid email'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('role').optional().isIn(['admin', 'approver', 'requester']).withMessage('Invalid role')
+  body('role').optional().isIn(['admin', 'approver', 'requester']).withMessage('Invalid role'),
+  body('employeeId').optional().trim()
 ];
 
 module.exports = {
