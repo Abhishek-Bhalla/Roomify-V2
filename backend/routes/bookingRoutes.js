@@ -22,8 +22,8 @@ router.get('/my', authorize('requester'), getMyBookings);
 
 // Approver routes - approve/reject
 router.get('/pending', authorize('approver', 'admin'), getPendingBookings);
-router.patch('/:id/approve', authorize('approver'), bookingIdValidation, validate, approveBooking);
-router.patch('/:id/reject', authorize('approver'), bookingIdValidation, validate, rejectBookingValidation, validate, rejectBooking);
+router.patch('/:id/approve', authorize('approver', 'admin'), bookingIdValidation, validate, approveBooking);
+router.patch('/:id/reject', authorize('approver', 'admin'), bookingIdValidation, validate, rejectBookingValidation, validate, rejectBooking);
 
 // All authenticated users can view all approved bookings (for availability)
 router.get('/all', authorize('admin', 'approver', 'requester'), getAllBookings);
