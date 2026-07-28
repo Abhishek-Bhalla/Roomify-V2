@@ -1,32 +1,64 @@
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// Create transporter based on environment
-const createTransporter = () => {
-  // For development, use ethereal email (fake SMTP) or Gmail
-  // For production, use a real SMTP service like SendGrid, AWS SES, etc.
+// Initialize Resend with API key
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
-  if (process.env.EMAIL_HOST === 'ethereal') {
-    // Ethereal Email - perfect for development
-    return nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
+// Get sender email - use approver email or default
+const getSenderEmail = () => {
+  return process.env.EMAIL_USER || 'onboarding@resend.dev';
+};
+
+// Send email using Resend (primary) or nodemailer (fallback)
+const sendEmail = async (to, templateName, data) => {
+  try {
+    // Skip if no email configured
+    if (!getSenderEmail()) {
+      console.log(`📧 Email skipped (not configured): ${templateName} to ${to}`);
+      return { success: false, reason: 'Email not configured' };
+    }
+
+    const template = emailTemplates[templateName](data);
+
+    // Try Resend first if API key is available
+    if (resend) {
+      const result = await resend.emails.send({
+        from: `Roomify <${getSenderEmail()}>`,
+        to: to,
+        subject: template.subject,
+        html: template.html
+      });
+
+      console.log(`📧 Email sent via Resend: ${templateName} to ${to}`);
+      return { success: true, messageId: result.data?.id };
+    }
+
+    // Fallback to nodemailer
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.EMAIL_PORT) || 587,
+      secure: process.env.EMAIL_SECURE === 'true',
       auth: {
         user: (process.env.EMAIL_USER || '').trim(),
         pass: (process.env.EMAIL_PASS || '').trim()
       }
     });
-  }
 
-  // Gmail or other SMTP
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.EMAIL_PORT) || 587,
-    secure: process.env.EMAIL_SECURE === 'true',
-    auth: {
-      user: (process.env.EMAIL_USER || '').trim(),
-      pass: (process.env.EMAIL_PASS || '').trim()
-    }
-  });
+    const info = await transporter.sendMail({
+      from: `"Roomify System" <${getSenderEmail()}>`,
+      to: to,
+      subject: template.subject,
+      html: template.html
+    });
+
+    console.log(`📧 Email sent via SMTP: ${templateName} to ${to}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`📧 Email failed: ${templateName} to ${to}`, error.message);
+    return { success: false, error: error.message };
+  }
 };
 
 // Email templates
@@ -192,39 +224,6 @@ const emailTemplates = {
       </div>
     `
   })
-};
-
-// Main send email function
-const sendEmail = async (to, templateName, data) => {
-  try {
-    // Skip if no email configured
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.log(`📧 Email skipped (not configured): ${templateName} to ${to}`);
-      return { success: false, reason: 'Email not configured' };
-    }
-
-    const transporter = createTransporter();
-    const template = emailTemplates[templateName](data);
-
-    const info = await transporter.sendMail({
-      from: `"Roomify System" <${process.env.EMAIL_USER}>`,
-      to: to,
-      subject: template.subject,
-      html: template.html
-    });
-
-    console.log(`📧 Email sent: ${templateName} to ${to}`);
-
-    // For ethereal, log the preview URL
-    if (process.env.EMAIL_HOST === 'ethereal' && info.messageId) {
-      console.log(`   Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
-    }
-
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error(`📧 Email failed: ${templateName} to ${to}`, error.message);
-    return { success: false, error: error.message };
-  }
 };
 
 // Convenience functions
