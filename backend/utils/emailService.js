@@ -1,21 +1,41 @@
 const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 
-// Send email using Gmail SMTP
+// Initialize SendGrid with API key if available
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
+
+// Send email using SendGrid API (primary) or SMTP (fallback)
 const sendEmail = async (to, templateName, data) => {
   try {
     // Skip if no email configured
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    if (!process.env.SENDGRID_API_KEY && (!process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
       console.log(`📧 Email skipped (not configured): ${templateName} to ${to}`);
       return { success: false, reason: 'Email not configured' };
     }
 
     const template = emailTemplates[templateName](data);
 
-    // Create transporter with Gmail SMTP using port 465 (SSL)
+    // Try SendGrid first if API key is available
+    if (process.env.SENDGRID_API_KEY) {
+      const msg = {
+        to: to,
+        from: process.env.EMAIL_USER || 'noreply@roomify.com',
+        subject: template.subject,
+        html: template.html
+      };
+
+      await sgMail.send(msg);
+      console.log(`📧 Email sent via SendGrid: ${templateName} to ${to}`);
+      return { success: true };
+    }
+
+    // Fallback to nodemailer SMTP
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
-      secure: true, // Use SSL
+      secure: true,
       auth: {
         user: (process.env.EMAIL_USER || '').trim(),
         pass: (process.env.EMAIL_PASS || '').trim()
@@ -29,7 +49,7 @@ const sendEmail = async (to, templateName, data) => {
       html: template.html
     });
 
-    console.log(`📧 Email sent: ${templateName} to ${to}`);
+    console.log(`📧 Email sent via SMTP: ${templateName} to ${to}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error(`📧 Email failed: ${templateName} to ${to}`, error.message);
