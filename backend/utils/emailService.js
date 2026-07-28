@@ -1,55 +1,21 @@
 const nodemailer = require('nodemailer');
-const { Resend } = require('resend');
 
-// Initialize Resend with API key
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
-
-// Get sender email - use Resend default for free tier
-const getSenderEmail = () => {
-  // For Resend free tier, use their default sender
-  if (process.env.RESEND_API_KEY) {
-    return 'Roomify <onboarding@resend.dev>';
-  }
-  return process.env.EMAIL_USER || 'onboarding@resend.dev';
-};
-
-// Send email using Resend (primary) or nodemailer (fallback)
+// Send email using Gmail SMTP
 const sendEmail = async (to, templateName, data) => {
   try {
     // Skip if no email configured
-    if (!process.env.RESEND_API_KEY && !process.env.EMAIL_USER) {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
       console.log(`📧 Email skipped (not configured): ${templateName} to ${to}`);
       return { success: false, reason: 'Email not configured' };
     }
 
     const template = emailTemplates[templateName](data);
 
-    // Try Resend first if API key is available
-    if (resend) {
-      // Use Resend's default sender for free tier
-      const result = await resend.emails.send({
-        from: 'Roomify <onboarding@resend.dev>',
-        to: to,
-        subject: template.subject,
-        html: template.html
-      });
-
-      if (result.error) {
-        console.error(`📧 Resend error:`, result.error);
-        return { success: false, error: result.error.message };
-      }
-
-      console.log(`📧 Email sent via Resend: ${templateName} to ${to}`);
-      return { success: true, messageId: result.data?.id };
-    }
-
-    // Fallback to nodemailer
+    // Create transporter with Gmail SMTP using port 465 (SSL)
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.EMAIL_PORT) || 587,
-      secure: process.env.EMAIL_SECURE === 'true',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // Use SSL
       auth: {
         user: (process.env.EMAIL_USER || '').trim(),
         pass: (process.env.EMAIL_PASS || '').trim()
@@ -57,13 +23,13 @@ const sendEmail = async (to, templateName, data) => {
     });
 
     const info = await transporter.sendMail({
-      from: `"Roomify System" <${getSenderEmail()}>`,
+      from: `"Roomify System" <${process.env.EMAIL_USER}>`,
       to: to,
       subject: template.subject,
       html: template.html
     });
 
-    console.log(`📧 Email sent via SMTP: ${templateName} to ${to}`);
+    console.log(`📧 Email sent: ${templateName} to ${to}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error(`📧 Email failed: ${templateName} to ${to}`, error.message);
