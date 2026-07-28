@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Check, X, XCircle, Eye } from 'lucide-react';
+import { RefreshCw, Check, X, XCircle, Eye, Calendar, Clock, MapPin, User, FileText } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
 import Button from '../../components/common/Button';
 import { bookingAPI } from '../../services/api';
@@ -8,6 +8,7 @@ const BookingRequests = () => {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showRemarksModal, setShowRemarksModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [hoveredBooking, setHoveredBooking] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [remarks, setRemarks] = useState('');
@@ -57,6 +58,11 @@ const BookingRequests = () => {
   const handleReject = (booking) => {
     setSelectedBooking(booking);
     setShowRemarksModal(true);
+  };
+
+  const handleViewDetails = (booking) => {
+    setSelectedBooking(booking);
+    setShowViewModal(true);
   };
 
   const handleSaveRemarks = async () => {
@@ -155,22 +161,13 @@ const BookingRequests = () => {
                     <td className="px-4 py-4"><StatusBadge status={booking.status} /></td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-1">
-                        <div className="relative group">
-                          <button
-                            onMouseEnter={() => setHoveredBooking(booking._id)}
-                            onMouseLeave={() => setHoveredBooking(null)}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 text-blue-600 transition-colors cursor-help"
-                            title="View Purpose"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          {hoveredBooking === booking._id && (
-                            <div className="absolute left-0 top-full mt-1 z-50 bg-gray-800 text-white text-sm rounded-lg p-3 w-64 shadow-lg">
-                              <p className="font-medium mb-1">Purpose:</p>
-                              <p className="text-gray-300">{booking.purpose || 'No purpose provided'}</p>
-                            </div>
-                          )}
-                        </div>
+                        <button
+                          onClick={() => handleViewDetails(booking)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
+                          title="View Details"
+                        >
+                          <Eye size={16} />
+                        </button>
                         {booking.status === 'pending' && (
                           <>
                             <button
@@ -224,6 +221,13 @@ const BookingRequests = () => {
                 <p className="text-gray-500 truncate">{booking.purpose}</p>
               </div>
               <div className="flex gap-2">
+                <button
+                  onClick={() => handleViewDetails(booking)}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                >
+                  <Eye size={16} />
+                  View Details
+                </button>
                 {booking.status === 'pending' && (
                   <>
                     <button
@@ -252,7 +256,7 @@ const BookingRequests = () => {
 
       {/* Reject Remarks Modal */}
       {showRemarksModal && selectedBooking && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-md">
             <div className="flex items-center gap-2 mb-4">
               <XCircle className="text-red-500" size={24} />
@@ -273,6 +277,120 @@ const BookingRequests = () => {
               <Button variant="outline" onClick={() => setShowRemarksModal(false)} className="flex-1">
                 Cancel
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Details Modal */}
+      {showViewModal && selectedBooking && (
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-800">Booking Details</h2>
+              <button
+                onClick={() => setShowViewModal(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Booking ID & Status */}
+              <div className="flex items-center justify-between pb-4 border-b">
+                <div>
+                  <p className="text-sm text-gray-500">Booking ID</p>
+                  <p className="font-medium text-gray-800">{selectedBooking.bookingId || 'N/A'}</p>
+                </div>
+                <StatusBadge status={selectedBooking.status} />
+              </div>
+
+              {/* Requester Info */}
+              <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <User size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Requester</p>
+                  <p className="font-medium text-gray-800">{selectedBooking.userId?.name || 'Unknown'}</p>
+                  <p className="text-sm text-gray-500">{selectedBooking.userId?.email || 'No email'}</p>
+                  <p className="text-sm text-gray-500">Employee ID: {selectedBooking.userId?.employeeId || '-'}</p>
+                </div>
+              </div>
+
+              {/* Room Info */}
+              <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <MapPin size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Room</p>
+                  <p className="font-medium text-gray-800">{selectedBooking.roomId?.name || 'Unknown'}</p>
+                  <p className="text-sm text-gray-500">Building: {selectedBooking.roomId?.building || '-'}</p>
+                  <p className="text-sm text-gray-500">Floor: {selectedBooking.roomId?.floor || '-'}</p>
+                </div>
+              </div>
+
+              {/* Date & Time */}
+              <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <Calendar size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Date & Time</p>
+                  <p className="font-medium text-gray-800">{new Date(selectedBooking.date).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-500 flex items-center gap-1">
+                    <Clock size={14} />
+                    {selectedBooking.startTime} - {selectedBooking.endTime}
+                  </p>
+                </div>
+              </div>
+
+              {/* Purpose */}
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText size={18} className="text-gray-500" />
+                  <p className="text-sm text-gray-500">Purpose</p>
+                </div>
+                <p className="text-gray-800 whitespace-pre-wrap">{selectedBooking.purpose || 'No purpose provided'}</p>
+              </div>
+
+              {/* Remarks (if rejected) */}
+              {selectedBooking.remarks && (
+                <div className="p-4 bg-red-50 rounded-xl border border-red-100">
+                  <p className="text-sm text-red-600 font-medium mb-1">Rejection Reason</p>
+                  <p className="text-red-800">{selectedBooking.remarks}</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              {selectedBooking.status === 'pending' && (
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    onClick={() => {
+                      handleApprove(selectedBooking._id);
+                      setShowViewModal(false);
+                    }}
+                    className="flex-1"
+                    disabled={actionLoading}
+                  >
+                    <Check size={18} className="mr-2" />
+                    Approve
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowViewModal(false);
+                      handleReject(selectedBooking);
+                    }}
+                    className="flex-1"
+                  >
+                    <X size={18} className="mr-2" />
+                    Reject
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

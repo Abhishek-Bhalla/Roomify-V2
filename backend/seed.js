@@ -20,7 +20,7 @@ const seedData = async () => {
       {
         name: 'Admin User',
         employeeId: 'EMP001',
-        email: 'admin@university.edu',
+        email: 'admin@roomify.com',
         password: 'admin123',
         role: 'admin',
         status: 'active'
@@ -28,7 +28,7 @@ const seedData = async () => {
       {
         name: 'Approver User',
         employeeId: 'EMP002',
-        email: 'approver@university.edu',
+        email: 'approver@roomify.com',
         password: 'approver123',
         role: 'approver',
         status: 'active'
@@ -36,7 +36,7 @@ const seedData = async () => {
       {
         name: 'Requester One',
         employeeId: 'EMP003',
-        email: 'requester1@jims.com',
+        email: 'requester1@roomify.com',
         password: 'requester123',
         role: 'requester',
         status: 'active'
@@ -44,7 +44,7 @@ const seedData = async () => {
       {
         name: 'Requester Two',
         employeeId: 'EMP004',
-        email: 'requester2@jims.com',
+        email: 'requester2@roomify.com',
         password: 'requester123',
         role: 'requester',
         status: 'active'
@@ -57,42 +57,42 @@ const seedData = async () => {
       {
         name: 'Conference Room A',
         capacity: 20,
-        facilities: ['Projector', 'Whiteboard', 'AC', 'Video Conference'],
+        facilities: ['Projector', 'Whiteboard', 'AC', 'Video Conference', 'Extension Sockets'],
         location: 'Building A, Floor 2',
         status: 'available'
       },
       {
         name: 'Computer Lab 101',
         capacity: 30,
-        facilities: ['Computers', 'Projector', 'AC', 'Internet'],
+        facilities: ['Computers', 'Projector', 'AC', 'Internet', 'Extension Sockets'],
         location: 'Building B, Floor 1',
         status: 'available'
       },
       {
         name: 'Meeting Room B',
         capacity: 10,
-        facilities: ['TV Screen', 'Whiteboard', 'AC'],
+        facilities: ['TV Screen', 'Whiteboard', 'AC', 'Extension Sockets'],
         location: 'Building A, Floor 3',
         status: 'available'
       },
       {
         name: 'Seminar Hall',
         capacity: 100,
-        facilities: ['Projector', 'Microphone', 'AC', 'Stage', 'Sound System'],
+        facilities: ['Projector', 'Microphone', 'AC', 'Stage', 'Sound System', 'Extension Sockets'],
         location: 'Main Building, Floor 1',
         status: 'available'
       },
       {
         name: 'Research Lab 205',
         capacity: 15,
-        facilities: ['Lab Equipment', 'Computers', 'AC', 'Internet'],
+        facilities: ['Lab Equipment', 'Computers', 'AC', 'Internet', 'Extension Sockets'],
         location: 'Building C, Floor 2',
         status: 'available'
       },
       {
         name: 'Training Room',
         capacity: 25,
-        facilities: ['Projector', 'Computers', 'AC', 'Whiteboard'],
+        facilities: ['Projector', 'Computers', 'AC', 'Whiteboard', 'Extension Sockets'],
         location: 'Building B, Floor 2',
         status: 'maintenance'
       }
@@ -101,10 +101,10 @@ const seedData = async () => {
 
     console.log('\nSeed completed successfully!');
     console.log('\nDemo Credentials:');
-    console.log('Admin: admin@university.edu / admin123');
-    console.log('Approver: approver@university.edu / approver123');
-    console.log('Requester 1: requester1@jims.com / requester123');
-    console.log('Requester 2: requester2@jims.com / requester123');
+    console.log('Admin: admin@roomify.com / admin123');
+    console.log('Approver: approver@roomify.com / approver123');
+    console.log('Requester 1: requester1@roomify.com / requester123');
+    console.log('Requester 2: requester2@roomify.com / requester123');
 
     process.exit(0);
   } catch (error) {

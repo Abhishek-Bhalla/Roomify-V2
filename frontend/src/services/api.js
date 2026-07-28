@@ -84,6 +84,15 @@ export const bulkUploadAPI = {
   uploadUsers: (users) => api.post('/bulk-upload/users', { users }),
 };
 
+// Feedback APIs
+export const feedbackAPI = {
+  getAll: (params) => api.get('/feedback', { params }),
+  getStats: () => api.get('/feedback/stats'),
+  submit: (data) => api.post('/feedback', data),
+  getCompletedBookings: () => api.get('/feedback/completed-bookings'),
+  getByRoom: (roomId) => api.get(`/feedback/room/${roomId}`),
+};
+
 // Mock data for development fallback
 export const mockStats = {
   admin: { totalUsers: 45, activeUsers: 38, rooms: 12 },

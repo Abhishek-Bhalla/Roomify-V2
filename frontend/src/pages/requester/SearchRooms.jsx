@@ -4,7 +4,7 @@ import StatusBadge from '../../components/common/StatusBadge';
 import Button from '../../components/common/Button';
 import { roomAPI, bookingAPI } from '../../services/api';
 
-const FACILITIES = ['Wi-Fi', 'Smart Board', 'Extension Sockets', 'Projector', 'Air Conditioning', 'Whiteboard', 'TV', 'Computer', 'Video Conferencing', 'Audio System'];
+const FACILITIES = ['Wi-Fi', 'Smart Board', 'Extension Sockets', 'Projector', 'AC', 'Whiteboard', 'TV', 'Computer', 'Video Conferencing', 'Audio System'];
 
 const SearchRooms = () => {
   const [rooms, setRooms] = useState([]);
@@ -73,7 +73,13 @@ const SearchRooms = () => {
   const handleViewDetails = async (room) => {
     setSelectedRoom(room);
     setShowRequestModal(true);
-    setBookingForm({ date: '', startTime: '', endTime: '', purpose: '' });
+    // Pre-fill booking form with filter values
+    setBookingForm({
+      date: filters.date || '',
+      startTime: filters.startTime || '',
+      endTime: '',
+      purpose: ''
+    });
     try {
       const response = await bookingAPI.getAll();
       const today = new Date().toISOString().split('T')[0];
@@ -161,7 +167,9 @@ const SearchRooms = () => {
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Date <span className="text-xs text-blue-500">(auto-filled in booking)</span>
+                </label>
                 <input
                   type="date"
                   value={filters.date}
@@ -172,7 +180,9 @@ const SearchRooms = () => {
 
               {/* Time */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Start Time <span className="text-xs text-blue-500">(auto-filled in booking)</span>
+                </label>
                 <input
                   type="time"
                   value={filters.startTime}
@@ -241,7 +251,9 @@ const SearchRooms = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date <span className="text-xs text-blue-500">(auto-filled in booking)</span>
+                  </label>
                   <input
                     type="date"
                     value={filters.date}
@@ -251,7 +263,9 @@ const SearchRooms = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Start Time <span className="text-xs text-blue-500">(auto-filled in booking)</span>
+                  </label>
                   <input
                     type="time"
                     value={filters.startTime}
@@ -357,7 +371,7 @@ const SearchRooms = () => {
 
       {/* Request Booking Modal */}
       {showRequestModal && selectedRoom && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-800">Room Details</h2>
@@ -497,7 +511,7 @@ const SearchRooms = () => {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-md text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: '#DCFCE7' }}>
               <CheckCircle size={32} className="text-green-600" />

@@ -155,7 +155,7 @@ const ManageUsers = () => {
                       <div className="flex items-center gap-3">
                         <div
                           className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0"
-                          style={{ background: '#3B82F6' }}
+                          style={{ background: '#034DA2' }}
                         >
                           {user.name.charAt(0)}
                         </div>
@@ -217,7 +217,7 @@ const ManageUsers = () => {
                 <div className="flex items-center gap-3">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0"
-                    style={{ background: '#3B82F6' }}
+                    style={{ background: '#034DA2' }}
                   >
                     {user.name.charAt(0)}
                   </div>
@@ -266,7 +266,7 @@ const ManageUsers = () => {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-800">

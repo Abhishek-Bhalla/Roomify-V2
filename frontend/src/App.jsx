@@ -16,11 +16,13 @@ import ApproverDashboard from './pages/approver/ApproverDashboard';
 import ApproverRooms from './pages/approver/ApproverRooms';
 import BookingRequests from './pages/approver/BookingRequests';
 import ApproverScheduleView from './pages/approver/ApproverScheduleView';
+import FeedbackList from './pages/approver/FeedbackList';
 
 import RequesterDashboard from './pages/requester/RequesterDashboard';
 import SearchRooms from './pages/requester/SearchRooms';
 import MyBookings from './pages/requester/MyBookings';
 import RequesterScheduleView from './pages/requester/RequesterScheduleView';
+import MyFeedback from './pages/requester/MyFeedback';
 
 function App() {
   return (
@@ -59,6 +61,7 @@ function App() {
             <Route path="rooms" element={<ApproverRooms />} />
             <Route path="requests" element={<BookingRequests />} />
             <Route path="schedule" element={<ApproverScheduleView />} />
+            <Route path="feedback" element={<FeedbackList />} />
           </Route>
 
           {/* Requester Routes */}
@@ -74,6 +77,7 @@ function App() {
             <Route path="search" element={<SearchRooms />} />
             <Route path="bookings" element={<MyBookings />} />
             <Route path="schedule" element={<RequesterScheduleView />} />
+            <Route path="feedback" element={<MyFeedback />} />
           </Route>
 
           <Route path="/" element={<Navigate to="/login" replace />} />

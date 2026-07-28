@@ -48,11 +48,19 @@ const login = async (req, res, next) => {
 
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, role, employeeId } = req.body;
+    const { name, email, password, role } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return errorResponse(res, 'Email already registered', 400);
+    }
+
+    // Generate unique employee ID - find max existing and add 1
+    const lastUser = await User.findOne().sort({ employeeId: -1 });
+    let newEmployeeId = 'EMP001'; // Default starting ID
+    if (lastUser && lastUser.employeeId) {
+      const lastNum = parseInt(lastUser.employeeId.replace('EMP', ''));
+      newEmployeeId = `EMP${String(lastNum + 1).padStart(3, '0')}`;
     }
 
     const user = await User.create({
@@ -60,7 +68,7 @@ const register = async (req, res, next) => {
       email,
       password,
       role: role || 'requester',
-      employeeId: employeeId || `EMP${Date.now()}`
+      employeeId: newEmployeeId
     });
 
     const token = generateToken(user._id);

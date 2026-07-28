@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
-const { validateWorkEmail, WORK_EMAIL_DOMAIN } = require('../utils/validation');
+const { validateEmail } = require('../utils/validation');
 
 const bulkUploadUsers = async (req, res, next) => {
   try {
@@ -27,10 +27,10 @@ const bulkUploadUsers = async (req, res, next) => {
           continue;
         }
 
-        const workEmailError = validateWorkEmail(email);
-        if (workEmailError) {
+        const emailError = validateEmail(email);
+        if (emailError) {
           results.failed++;
-          results.errors.push(`Invalid email ${email}: Only ${WORK_EMAIL_DOMAIN} addresses are allowed`);
+          results.errors.push(`Invalid email ${email}: ${emailError}`);
           continue;
         }
 
@@ -66,7 +66,7 @@ const bulkUploadUsers = async (req, res, next) => {
 };
 
 const downloadTemplate = async (req, res) => {
-  const csvContent = 'employeeId,name,email,password,role\nEMP001,John Doe,john.doe@jims.org,password123,requester\nEMP002,Jane Smith,jane.smith@jims.org,password456,approver';
+  const csvContent = 'employeeId,name,email,password,role\nEMP001,John Doe,john.doe@example.com,password123,requester\nEMP002,Jane Smith,jane.smith@example.com,password456,approver';
 
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename=user_upload_template.csv');

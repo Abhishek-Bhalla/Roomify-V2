@@ -1,4 +1,5 @@
-const IconButton = ({ icon: Icon, onClick, color = 'gray', className = '' }) => {
+const IconButton = ({ icon: IconButtoncon, onClick, color = 'gray', className = '' }) => {
+import IconButton from './IconButton';
   const colors = {
     blue: 'hover:bg-blue-50 text-blue-600',
     green: 'hover:bg-green-50 text-green-600',

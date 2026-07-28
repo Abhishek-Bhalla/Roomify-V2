@@ -1,0 +1,192 @@
+# Comprehensive Workflow Analysis - Roomify Application
+
+## Step 1: Identify Actors
+
+### 1. Admin
+| Attribute | Details |
+|-----------|---------|
+| Name | Admin |
+| Description | System administrator with full control over the application |
+| Primary Goal | Manage users, rooms, bookings, and system configuration |
+| Permissions | Full CRUD on all resources (users, rooms, bookings), view analytics, manage system settings |
+| Key Responsibilities | User management, room management, monitoring bookings, system configuration |
+| Main Features Accessible | Dashboard, User Management, Room Management, Booking Management, Reports, Settings |
+
+### 2. Approver
+| Attribute | Details |
+|-----------|---------|
+| Name | Approver |
+| Description | Manager who approves or rejects room booking requests |
+| Primary Goal | Review and approve/reject booking requests from requesters |
+| Permissions | View all bookings, approve/reject bookings, view requester details |
+| Key Responsibilities | Review booking requests, check availability, approve/reject based on policies |
+| Main Features Accessible | Dashboard, Booking Requests, Booking History, Profile |
+
+### 3. Requester
+| Attribute | Details |
+|-----------|---------|
+| Name | Requester |
+| Description | Employee who books meeting rooms |
+| Primary Goal | Find and book available rooms for meetings/events |
+| Permissions | Create bookings, view own bookings, cancel own bookings |
+| Key Responsibilities | Search rooms, submit booking requests, attend meetings |
+| Main Features Accessible | Dashboard, Search Rooms, My Bookings, Profile |
+
+---
+
+## Step 2: Actor Journeys
+
+### Actor: Requester
+
+REQUESTER
+    |
+    ▼
+Login Page (Email/Pass)
+    |
+    ▼
+Dashboard - My Bookings / Quick Book
+    |
+    +--> SEARCH ROOMS --> SELECT ROOM --> BOOKING FORM --> SUBMIT REQUEST --> PENDING APPROVAL --> NOTIFICATIONS (Approved/Rejected) --> My Bookings --> Profile --> Logout
+    |
+    +--> MY BOOKINGS --> View Details / Cancel --> Profile --> Logout
+
+
+### Actor: Approver
+
+APPROVER
+    |
+    ▼
+Login Page (Email/Pass)
+    |
+    ▼
+Dashboard - Pending: X / Approved: Y / Rejected: Z
+    |
+    +--> PENDING REQUESTS --> VIEW REQUEST --> BOOKING DETAILS --> DECISION PAGE (Approve/Reject/Comment) --> SEND NOTIFICATION --> Booking History --> Profile --> Logout
+    |
+    +--> ALL BOOKINGS --> Filter by Date/Status --> View Details --> Profile --> Logout
+
+
+### Actor: Admin
+
+ADMIN
+    |
+    ▼
+Login Page (Email/Pass)
+    |
+    ▼
+Dashboard - Total Users / Total Rooms / Total Bookings / Pending
+    |
+    +--> USERS MANAGEMENT --> Add/Edit/Delete/Roles --> Profile --> Logout
+    |
+    +--> ROOMS MANAGEMENT --> Add/Edit/Delete/Amenities --> Profile --> Logout
+    |
+    +--> BOOKINGS MANAGEMENT --> View All/Approve/Reject/Cancel --> Profile --> Logout
+    |
+    +--> BULK UPLOAD --> Upload CSV --> Preview --> Confirm --> Profile --> Logout
+    |
+    +--> REPORTS --> Bookings/Users/Rooms --> Profile --> Logout
+    |
+    +--> SETTINGS --> System/Email/Notifications --> Profile --> Logout
+    |
+    +--> PROFILE --> Logout
+
+
+---
+
+## Step 3: Permission Matrix
+
+| Feature | Requester | Approver | Admin |
+|---------|-----------|----------|-------|
+| Authentication | | | |
+| Login | ✓ | ✓ | ✓ |
+| Register | ✓ | ✓ | ✓ |
+| Logout | ✓ | ✓ | ✓ |
+| Rooms | | | |
+| Search Rooms | ✓ | ✓ | ✓ |
+| View Room Details | ✓ | ✓ | ✓ |
+| Add Room | ✗ | ✗ | ✓ |
+| Edit Room | ✗ | ✗ | ✓ |
+| Delete Room | ✗ | ✗ | ✓ |
+| Bookings | | | |
+| Create Booking | ✓ | ✓ | ✓ |
+| View Own Bookings | ✓ | ✓ | ✓ |
+| Cancel Own Booking | ✓ | ✗ | ✓ |
+| View All Bookings | ✗ | ✓ | ✓ |
+| Approve Booking | ✗ | ✓ | ✓ |
+| Reject Booking | ✗ | ✓ | ✓ |
+| Cancel Any Booking | ✗ | ✗ | ✓ |
+| Users | | | |
+| View Profile | ✓ | ✓ | ✓ |
+| Edit Profile | ✓ | ✓ | ✓ |
+| View All Users | ✗ | ✗ | ✓ |
+| Add User | ✗ | ✗ | ✓ |
+| Edit User | ✗ | ✗ | ✓ |
+| Delete User | ✗ | ✗ | ✓ |
+| Bulk Upload | ✗ | ✗ | ✓ |
+| Reports | ✗ | ✗ | ✓ |
+| Settings | ✗ | ✗ | ✓ |
+
+---
+
+## Step 4: Decision Points
+
+### Requester Journey - Decision Points
+1. Search Filters → Choose date, time, capacity, amenities
+2. Room Selection → Pick from available rooms
+3. Booking Submission → Confirm or cancel request
+
+### Approver Journey - Decision Points
+1. Review Request → Check details and availability
+2. Approval Decision → Approve / Reject / Request More Info
+3. Rejection Reason → Select reason or add custom comment
+
+### Admin Journey - Decision Points
+1. User Management → Add/Edit/Delete users
+2. Room Setup → Configure rooms and amenities
+3. Bulk Operations → Upload users via CSV
+
+---
+
+## Step 5: Data Flow
+
+REQUESTER                    APPROVER                    ADMIN
+    |                          |                          |
+    +---- Create Booking ----->|                          |
+    |                          |                          |
+    <- Notification: ---------|                          |
+      Pending/Approved/       |                          |
+      Rejected               |                          |
+    |                          |                          |
+    |                          +--- Review ------------- >|
+    |                          |                          |
+    <- Approval --------------|                          |
+    |                          |                          |
+    |                          +-- All Bookings -------->|
+    |                          |                          |
+    |                          +-- User List ----------->|
+    |                          |                          |
+    |                          +-- Room List ----------->|
+    |                          |                          |
+         MONGODB DATABASE
+    |         |         |
+    v         v         v
+    +-----------------------------+
+    |       COLLECTIONS            |
+    |  - users    - rooms          |
+    |  - bookings - amenities     |
+    |  - notifications            |
+    +-----------------------------+
+
+---
+
+## Summary
+
+| Actor | Role | Key Features |
+|-------|------|--------------|
+| Requester | Books rooms | Search → Book → View Status → Cancel |
+| Approver | Manages approvals | Review → Approve/Reject → History |
+| Admin | Full control | All CRUD + Bulk Upload + Reports |
+
+---
+
+End of Workflow Analysis

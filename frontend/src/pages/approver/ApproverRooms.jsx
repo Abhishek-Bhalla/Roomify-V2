@@ -24,7 +24,7 @@ const ApproverRooms = () => {
   });
   const [generatedRoomId, setGeneratedRoomId] = useState('');
 
-  const facilityOptions = ['Projector', 'Smart Board', 'Wi-Fi', 'AC', 'Whiteboard', 'TV', 'Video Conferencing', 'Computer', 'Audio System'];
+  const facilityOptions = ['Wi-Fi', 'Smart Board', 'Extension Sockets', 'Projector', 'AC', 'Whiteboard', 'TV', 'Computer', 'Video Conferencing', 'Audio System'];
 
   // Generate room ID preview
   const generateRoomIdPreview = (building, floor, roomCode) => {
@@ -326,7 +326,7 @@ const ApproverRooms = () => {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-800">
@@ -448,7 +448,7 @@ const ApproverRooms = () => {
 
       {/* View Modal */}
       {showViewModal && selectedRoom && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-800">Room Details</h2>

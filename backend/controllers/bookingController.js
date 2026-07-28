@@ -1,9 +1,10 @@
 const { body, param } = require('express-validator');
 const Booking = require('../models/Booking');
 const Room = require('../models/Room');
+const User = require('../models/User');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 const { createNotification } = require('./notificationController');
-const { sendBookingCreatedEmail, sendBookingApprovedEmail, sendBookingRejectedEmail } = require('../utils/emailService');
+const { sendBookingCreatedEmail, sendBookingApprovedEmail, sendBookingRejectedEmail, sendBookingRequestForApprovalEmail } = require('../utils/emailService');
 
 const checkConflict = async (roomId, date, startTime, endTime, excludeBookingId = null) => {
   const query = {
@@ -69,7 +70,7 @@ const createBooking = async (req, res, next) => {
       `Your booking request for ${booking.roomId.name} on ${new Date(date).toLocaleDateString()} from ${startTime} to ${endTime} has been submitted and is pending approval.`
     );
 
-    // Send confirmation email
+    // Send confirmation email to requester
     await sendBookingCreatedEmail(
       req.user.email,
       req.user.name,
@@ -82,6 +83,25 @@ const createBooking = async (req, res, next) => {
         bookingId: booking.bookingId
       }
     );
+
+    // Send email to all approvers about new booking request
+    const approvers = await User.find({ role: 'approver', status: 'active' });
+    for (const approver of approvers) {
+      await sendBookingRequestForApprovalEmail(
+        approver.email,
+        approver.name,
+        {
+          roomName: booking.roomId.name,
+          date: new Date(date).toLocaleDateString(),
+          startTime,
+          endTime,
+          purpose,
+          bookingId: booking.bookingId,
+          requesterName: req.user.name,
+          requesterEmail: req.user.email
+        }
+      );
+    }
 
     return successResponse(res, { booking }, 'Booking request created successfully', 201);
   } catch (error) {

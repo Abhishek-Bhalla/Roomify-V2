@@ -129,6 +129,68 @@ const emailTemplates = {
         <p style="color: #6b7280; font-size: 12px;">Roomify - College Room Booking System</p>
       </div>
     `
+  }),
+
+  bookingRequestForApproval: (data) => ({
+    subject: `📋 New Booking Request - ${data.roomName} - ${data.date}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #6366f1;">📋 New Booking Request</h2>
+        <p>Hello ${data.approverName},</p>
+        <p>A new booking request requires your <strong>approval</strong>.</p>
+
+        <div style="background: #eef2ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Booking Details:</strong></p>
+          <p>🎫 <strong>Booking ID:</strong> ${data.bookingId}</p>
+          <p>📍 <strong>Room:</strong> ${data.roomName}</p>
+          <p>📅 <strong>Date:</strong> ${data.date}</p>
+          <p>🕐 <strong>Time:</strong> ${data.startTime} - ${data.endTime}</p>
+          <p>📝 <strong>Purpose:</strong> ${data.purpose}</p>
+          <p>👤 <strong>Requested By:</strong> ${data.requesterName} (${data.requesterEmail})</p>
+        </div>
+
+        <p>Please login to the Roomify system to approve or reject this request.</p>
+
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+        <p style="color: #6b7280; font-size: 12px;">Roomify - College Room Booking System</p>
+      </div>
+    `
+  }),
+
+  feedbackRequest: (data) => ({
+    subject: `📝 Share your feedback for your recent ${data.roomName} booking`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #6366f1;">📝 We Value Your Feedback!</h2>
+        <p>Hello ${data.userName},</p>
+        <p>Your booking for <strong>${data.roomName}</strong> has been completed.</p>
+        <p>We'd appreciate your feedback to help us improve our service.</p>
+
+        <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Booking Details:</strong></p>
+          <p>📍 <strong>Room:</strong> ${data.roomName}</p>
+          <p>📅 <strong>Date:</strong> ${data.date}</p>
+          <p>🕐 <strong>Time:</strong> ${data.startTime} - ${data.endTime}</p>
+          <p>📝 <strong>Purpose:</strong> ${data.purpose}</p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <p style="margin-bottom: 15px; font-size: 16px;"><strong>Rate your experience:</strong></p>
+          <div style="font-size: 32px; color: #fbbf24;">
+            ★★★★★
+          </div>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${data.feedbackUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Give Feedback</a>
+        </div>
+
+        <p style="color: #6b7280; font-size: 14px;">It only takes a minute! Your feedback helps us serve you better.</p>
+
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+        <p style="color: #6b7280; font-size: 12px;">Roomify - College Room Booking System</p>
+      </div>
+    `
   })
 };
 
@@ -194,10 +256,26 @@ const sendBookingReminderEmail = (userEmail, userName, bookingData) => {
   });
 };
 
+const sendBookingRequestForApprovalEmail = (approverEmail, approverName, bookingData) => {
+  return sendEmail(approverEmail, 'bookingRequestForApproval', {
+    approverName,
+    ...bookingData
+  });
+};
+
+const sendFeedbackRequestEmail = (userEmail, userName, bookingData) => {
+  return sendEmail(userEmail, 'feedbackRequest', {
+    userName,
+    ...bookingData
+  });
+};
+
 module.exports = {
   sendEmail,
   sendBookingCreatedEmail,
   sendBookingApprovedEmail,
   sendBookingRejectedEmail,
-  sendBookingReminderEmail
+  sendBookingReminderEmail,
+  sendBookingRequestForApprovalEmail,
+  sendFeedbackRequestEmail
 };

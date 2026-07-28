@@ -338,7 +338,7 @@ const ManageRooms = () => {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="w-full max-w-md p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">
               {editingRoom ? 'Edit Room' : 'Add New Room'}
@@ -379,12 +379,28 @@ const ManageRooms = () => {
                 value={formData.capacity}
                 onChange={(e) => handleFormChange('capacity', e.target.value)}
               />
-              <Input
-                label="Facilities (comma-separated)"
-                value={formData.facilities}
-                onChange={(e) => handleFormChange('facilities', e.target.value)}
-                placeholder="Projector, AC, Computers"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Facilities</label>
+                <div className="grid grid-cols-2 gap-2 border p-3 rounded-lg">
+                  {['Wi-Fi', 'Smart Board', 'Extension Sockets', 'Projector', 'AC', 'Whiteboard', 'TV', 'Computer', 'Video Conferencing', 'Audio System'].map((f) => (
+                    <label key={f} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.facilities.split(',').map(item => item.trim()).includes(f)}
+                        onChange={(e) => {
+                          const currentFacilities = formData.facilities.split(',').map(item => item.trim()).filter(Boolean);
+                          const newFacilities = e.target.checked
+                            ? [...currentFacilities, f]
+                            : currentFacilities.filter(item => item !== f);
+                          handleFormChange('facilities', newFacilities.join(', '));
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-gray-700">{f}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="flex gap-3 mt-6">
               <Button onClick={handleSave} className="flex-1">Save</Button>
@@ -397,7 +413,7 @@ const ManageRooms = () => {
 
     {/* Affected Bookings Modal */}
     {showAffectedModal && selectedRoom && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">

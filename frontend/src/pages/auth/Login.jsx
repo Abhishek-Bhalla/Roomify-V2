@@ -5,7 +5,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import PasswordInput from '../../components/common/PasswordInput';
-import { Building2 } from 'lucide-react';
+import RLogo from '../../assets/R.png';
 import { authAPI } from '../../services/api';
 
 const Login = () => {
@@ -16,7 +16,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
-  const [registerData, setRegisterData] = useState({ name: '', email: '', password: '', employeeId: '' });
+  const [registerData, setRegisterData] = useState({ name: '', email: '', password: '' });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,7 +44,7 @@ const Login = () => {
       setEmail(registerData.email);
       setPassword(registerData.password);
       setError('Registration successful! Please sign in.');
-      setRegisterData({ name: '', email: '', password: '', employeeId: '' });
+      setRegisterData({ name: '', email: '', password: '' });
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
@@ -67,8 +67,8 @@ const Login = () => {
       <div className="w-full max-w-md">
         <Card className="p-6 sm:p-8">
           <div className="text-center mb-6 sm:mb-8">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
-              <Building2 size={28} className="sm:size-32 text-white" />
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <img src={RLogo} alt="Logo" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-primary">Roomify</h1>
             <p className="text-gray-500 text-sm mt-1">Room & Lab Booking System</p>
@@ -82,14 +82,6 @@ const Login = () => {
                 value={registerData.name}
                 onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                 placeholder="Enter your name"
-                required
-              />
-              <Input
-                label="Employee ID"
-                type="text"
-                value={registerData.employeeId}
-                onChange={(e) => setRegisterData({ ...registerData, employeeId: e.target.value })}
-                placeholder="Enter your employee ID"
                 required
               />
               <Input
@@ -170,15 +162,11 @@ const Login = () => {
           )}
 
           <div className="mt-6 sm:mt-8 p-3 sm:p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-500 mb-2 font-semibold">Demo Credentials:</p>
+            <p className="text-xs text-gray-500 mb-2 font-semibold"></p>
             <div className="text-xs text-gray-600 space-y-1">
-              <p><strong>Admin:</strong> admin@jims.org / admin123</p>
-              <p><strong>Approver:</strong> approver@jims.org / approver123</p>
-              <p><strong>Requester:</strong> requester@jims.org / requester123</p>
-              {/* <p><strong>John:</strong> john@jims.org / john123</p>
-              <p><strong>Sarah:</strong> sarah@jims.org / sarah123</p>
-              <p><strong>Mike:</strong> mike@jims.org / mike123</p>
-              <p><strong>Emily:</strong> emily@jims.org / emily123</p> */}
+              {/* <p><strong>Admin:</strong> admin@roomify.com / admin123</p>
+              <p><strong>Approver:</strong> approver@roomify.com / approver123</p>
+              <p><strong>Requester:</strong> requester@roomify.com / requester123</p> */}
             </div>
           </div>
         </Card>

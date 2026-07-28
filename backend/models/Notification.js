@@ -8,12 +8,11 @@ const notificationSchema = new mongoose.Schema({
   },
   bookingId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Booking',
-    required: true
+    ref: 'Booking'
   },
   type: {
     type: String,
-    enum: ['booking_reminder', 'booking_approved', 'booking_rejected', 'booking_created'],
+    enum: ['booking_reminder', 'booking_approved', 'booking_rejected', 'booking_created', 'feedback_alert'],
     required: true
   },
   title: {

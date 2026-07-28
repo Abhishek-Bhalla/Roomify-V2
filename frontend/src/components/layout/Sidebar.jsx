@@ -12,7 +12,9 @@ import {
   Users,
   Upload,
   X,
+  Star,
 } from 'lucide-react';
+import RLogo from '../../assets/R.png';
 
 const Sidebar = ({ onClose }) => {
   const { user, logout } = useAuth();
@@ -32,12 +34,14 @@ const Sidebar = ({ onClose }) => {
       { to: '/approver/rooms', icon: DoorOpen, label: 'Manage Rooms' },
       { to: '/approver/requests', icon: ClipboardCheck, label: 'Booking Requests' },
       { to: '/approver/schedule', icon: Calendar, label: 'Schedule' },
+      { to: '/approver/feedback', icon: Star, label: 'Feedback' },
     ],
     requester: [
       { to: '/requester', icon: LayoutDashboard, label: 'Dashboard' },
       { to: '/requester/search', icon: Search, label: 'Search Rooms' },
       { to: '/requester/bookings', icon: BookOpen, label: 'My Bookings' },
       { to: '/requester/schedule', icon: Calendar, label: 'My Schedule' },
+      { to: '/requester/feedback', icon: Star, label: 'Feedback' },
     ],
   };
 
@@ -56,9 +60,7 @@ const Sidebar = ({ onClose }) => {
       {/* Top Branding */}
       <div className="p-5 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: '#2563EB' }}>
-            <Calendar size={20} className="text-white" />
-          </div>
+          <img src={RLogo} alt="Logo" className="w-10 h-10 rounded-lg object-contain" />
           <h1 className="text-lg font-bold text-gray-800 whitespace-nowrap">Roomify</h1>
         </div>
         <button
