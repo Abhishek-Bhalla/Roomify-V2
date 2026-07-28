@@ -9,6 +9,12 @@ const sendReminderNotification = async (booking) => {
     await booking.populate('roomId', 'name capacity building floor');
     await booking.populate('userId', 'name email');
 
+    // Skip if userId or userId.email is null
+    if (!booking.userId || !booking.userId.email) {
+      console.log(`Skipping reminder for booking ${booking._id} - no user email`);
+      return;
+    }
+
     const existingNotification = await Notification.findOne({
       bookingId: booking._id,
       type: 'booking_reminder',
@@ -59,6 +65,12 @@ const checkCompletedBookingsAndSendFeedbackEmail = async () => {
     }).populate('roomId', 'name').populate('userId', 'name email');
 
     for (const booking of bookings) {
+      // Skip if userId or userId.email is null
+      if (!booking.userId || !booking.userId.email) {
+        console.log(`Skipping feedback email for booking ${booking._id} - no user email`);
+        continue;
+      }
+
       const bookingEndTime = booking.endTime.split(':');
       const bookingEndDate = new Date(booking.date);
       bookingEndDate.setHours(parseInt(bookingEndTime[0]), parseInt(bookingEndTime[1]), 0, 0);
