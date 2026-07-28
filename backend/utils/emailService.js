@@ -6,8 +6,12 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-// Get sender email - use approver email or default
+// Get sender email - use Resend default for free tier
 const getSenderEmail = () => {
+  // For Resend free tier, use their default sender
+  if (process.env.RESEND_API_KEY) {
+    return 'Roomify <onboarding@resend.dev>';
+  }
   return process.env.EMAIL_USER || 'onboarding@resend.dev';
 };
 
@@ -15,7 +19,7 @@ const getSenderEmail = () => {
 const sendEmail = async (to, templateName, data) => {
   try {
     // Skip if no email configured
-    if (!getSenderEmail()) {
+    if (!process.env.RESEND_API_KEY && !process.env.EMAIL_USER) {
       console.log(`📧 Email skipped (not configured): ${templateName} to ${to}`);
       return { success: false, reason: 'Email not configured' };
     }
@@ -24,12 +28,18 @@ const sendEmail = async (to, templateName, data) => {
 
     // Try Resend first if API key is available
     if (resend) {
+      // Use Resend's default sender for free tier
       const result = await resend.emails.send({
-        from: `Roomify <${getSenderEmail()}>`,
+        from: 'Roomify <onboarding@resend.dev>',
         to: to,
         subject: template.subject,
         html: template.html
       });
+
+      if (result.error) {
+        console.error(`📧 Resend error:`, result.error);
+        return { success: false, error: result.error.message };
+      }
 
       console.log(`📧 Email sent via Resend: ${templateName} to ${to}`);
       return { success: true, messageId: result.data?.id };
