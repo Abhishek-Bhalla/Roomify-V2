@@ -6,6 +6,7 @@ const ScheduleCalendar = ({ bookings, isLoading, onRefresh, title, subtitle }) =
   const [currentDate, setCurrentDate] = useState(new Date());
   const [hoveredBooking, setHoveredBooking] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [expandedDay, setExpandedDay] = useState(null);
 
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
@@ -148,7 +149,7 @@ const ScheduleCalendar = ({ bookings, isLoading, onRefresh, title, subtitle }) =
                       {day.getDate()}
                     </div>
                     <div className="space-y-1">
-                      {dayBookings.map(booking => {
+                      {dayBookings.slice(0, expandedDay === index ? dayBookings.length : 2).map(booking => {
                         const colors = getStatusColor(booking.status);
                         return (
                         <div
@@ -184,6 +185,22 @@ const ScheduleCalendar = ({ bookings, isLoading, onRefresh, title, subtitle }) =
                         <div className="text-xs text-gray-500 sm:hidden">
                           +{dayBookings.length - 1}
                         </div>
+                      )}
+                      {dayBookings.length > 2 && expandedDay !== index && (
+                        <button
+                          onClick={() => setExpandedDay(expandedDay === index ? null : index)}
+                          className="text-xs text-primary font-medium hover:underline"
+                        >
+                          +{dayBookings.length - 2} more
+                        </button>
+                      )}
+                      {dayBookings.length > 2 && expandedDay === index && (
+                        <button
+                          onClick={() => setExpandedDay(null)}
+                          className="text-xs text-primary font-medium hover:underline"
+                        >
+                          Show less
+                        </button>
                       )}
                     </div>
                   </>
