@@ -148,7 +148,7 @@ const ScheduleCalendar = ({ bookings, isLoading, onRefresh, title, subtitle }) =
                       {day.getDate()}
                     </div>
                     <div className="space-y-1">
-                      {dayBookings.slice(0, 2).map(booking => {
+                      {dayBookings.map(booking => {
                         const colors = getStatusColor(booking.status);
                         return (
                         <div
@@ -180,11 +180,6 @@ const ScheduleCalendar = ({ bookings, isLoading, onRefresh, title, subtitle }) =
                         </div>
                         );
                       })}
-                      {dayBookings.length > 2 && (
-                        <div className="text-xs text-gray-500 hidden sm:block">
-                          +{dayBookings.length - 2} more
-                        </div>
-                      )}
                       {dayBookings.length > 1 && (
                         <div className="text-xs text-gray-500 sm:hidden">
                           +{dayBookings.length - 1}
