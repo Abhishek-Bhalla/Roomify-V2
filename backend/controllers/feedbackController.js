@@ -143,7 +143,7 @@ exports.getCompletedBookings = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Get all approved bookings for this user (no date filter)
+    // Get all approved bookings for this user
     const bookings = await Booking.find({
       userId,
       status: 'approved'
@@ -151,18 +151,18 @@ exports.getCompletedBookings = async (req, res) => {
       .populate('roomId', 'name building floor')
       .sort({ date: -1 });
 
-    // Filter to only show bookings that have ended (based on date AND time)
+    // Filter to only show bookings that have ended (based on date AND time + 1 hour buffer)
     const now = new Date();
     const completedBookings = bookings.filter(booking => {
       const bookingEnd = new Date(booking.date);
-      const [endHour, endMin] = booking.endTime.split(':');
-      bookingEnd.setHours(parseInt(endHour), parseInt(endMin), 0, 0);
+      const [endHour, endMin] = booking.endTime.split(':').map(Number);
+      bookingEnd.setHours(endHour, endMin, 0, 0);
       // Add 1 hour buffer after end time
       const bookingEndWithBuffer = new Date(bookingEnd.getTime() + 60 * 60 * 1000);
       return bookingEndWithBuffer < now;
     });
 
-    // Check which bookings already have feedback
+    // Check which bookings already have feedback (with actual rating)
     const bookingIds = completedBookings.map(b => b._id);
     const feedbacks = await Feedback.find({ bookingId: { $in: bookingIds }, rating: { $gt: 0 } });
     const feedbackMap = new Map(feedbacks.map(f => [f.bookingId.toString(), true]));

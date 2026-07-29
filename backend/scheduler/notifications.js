@@ -58,10 +58,9 @@ const checkCompletedBookingsAndSendFeedbackEmail = async () => {
   try {
     const now = new Date();
 
-    // Find approved bookings that have ended (endTime has passed)
+    // Find all approved bookings (both past and today)
     const bookings = await Booking.find({
-      status: 'approved',
-      date: { $lt: new Date(now.toISOString().split('T')[0]) }
+      status: 'approved'
     }).populate('roomId', 'name').populate('userId', 'name email');
 
     for (const booking of bookings) {
@@ -71,23 +70,28 @@ const checkCompletedBookingsAndSendFeedbackEmail = async () => {
         continue;
       }
 
-      const bookingEndTime = booking.endTime.split(':');
-      const bookingEndDate = new Date(booking.date);
-      bookingEndDate.setHours(parseInt(bookingEndTime[0]), parseInt(bookingEndTime[1]), 0, 0);
+      // Calculate booking end datetime
+      const bookingDate = new Date(booking.date);
+      const [endHour, endMin] = booking.endTime.split(':').map(Number);
+      bookingDate.setHours(endHour, endMin, 0, 0);
 
-      // Check if booking has ended (add 1 hour buffer)
-      const endedTime = new Date(bookingEndDate.getTime() + 60 * 60 * 1000);
+      // Add 1 hour buffer after booking ends
+      const bookingEndWithBuffer = new Date(bookingDate.getTime() + 60 * 60 * 1000);
 
-      if (endedTime < now) {
+      // Only process bookings that have ended
+      if (bookingEndWithBuffer < now) {
         // Check if feedback already submitted
         const existingFeedback = await Feedback.findOne({
           bookingId: booking._id,
-          rating: { $gt: 0 } // Only count actual feedback (rating > 0)
+          rating: { $gt: 0 }
         });
 
         if (!existingFeedback) {
-          // Send feedback request email
-          const feedbackUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/requester/feedback?bookingId=${booking._id}`;
+          // Build feedback URL - use Render URL or fallback
+          const frontendUrl = process.env.FRONTEND_URL || 'https://roomify-v2-frontend-xv85.vercel.app';
+          const feedbackUrl = `${frontendUrl}/requester/feedback?bookingId=${booking._id}`;
+
+          console.log(`Sending feedback request for booking ${booking._id} - ended at ${bookingEndWithBuffer}`);
 
           await sendFeedbackRequestEmail(
             booking.userId.email,
