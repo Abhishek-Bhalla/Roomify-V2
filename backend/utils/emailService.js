@@ -1,10 +1,12 @@
 const nodemailer = require('nodemailer');
 const sgMail = require('@sendgrid/mail');
+const { Resend } = require('resend');
 
-// Initialize SendGrid with API key if available
+// Initialize API providers at startup so misconfig surfaces early.
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Lazy-initialized SMTP transporter (kept alive across sends on the same Railway instance).
 // Used for both Brevo and Gmail — pick based on which env vars are set.
@@ -52,14 +54,16 @@ const getFromAddress = () => {
   return (process.env.BREVO_USER || process.env.EMAIL_USER || 'noreply@roomify.com').trim();
 };
 
-// Send email using SendGrid API → Brevo SMTP → Gmail SMTP (in that order).
-// If SendGrid returns 401/403 (auth/quota), we automatically fall through to Brevo.
+// Send email using Resend → SendGrid → Brevo SMTP → Gmail SMTP (in that order).
+// HTTPS-based providers run first because they're never blocked by cloud egress rules.
+// SMTP fallbacks only kick in if all HTTP providers fail.
 const sendEmail = async (to, templateName, data) => {
+  const hasResend = !!process.env.RESEND_API_KEY;
   const hasSendGrid = !!process.env.SENDGRID_API_KEY;
   const hasBrevo = !!(process.env.BREVO_USER && process.env.BREVO_PASS);
   const hasGmail = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
 
-  if (!hasSendGrid && !hasBrevo && !hasGmail) {
+  if (!hasResend && !hasSendGrid && !hasBrevo && !hasGmail) {
     console.log(`📧 Email skipped (not configured): ${templateName} to ${to}`);
     return { success: false, reason: 'Email not configured' };
   }
@@ -69,7 +73,24 @@ const sendEmail = async (to, templateName, data) => {
   const displayName = process.env.EMAIL_FROM_NAME || 'Roomify System';
   const fromHeader = `"${displayName}" <${fromAddress}>`;
 
-  // Priority 1: SendGrid API over HTTPS — most reliable when it works.
+  // Priority 1: Resend HTTPS API — never blocked by Railway/firewall rules.
+  if (hasResend && resend) {
+    try {
+      const result = await resend.emails.send({
+        from: fromHeader,
+        to,
+        subject: template.subject,
+        html: template.html
+      });
+      const messageId = result?.data?.id || result?.id || 'unknown';
+      console.log(`📧 Email sent via Resend: ${templateName} to ${to} from=${fromAddress} (id=${messageId})`);
+      return { success: true, messageId };
+    } catch (error) {
+      console.error(`📧 Resend failed: ${error.message} — falling through`);
+    }
+  }
+
+  // Priority 2: SendGrid HTTPS API.
   if (hasSendGrid) {
     try {
       const msg = {
@@ -86,14 +107,14 @@ const sendEmail = async (to, templateName, data) => {
       const isFallbackable = [401, 403, 429].includes(status) ||
         (error.response && error.response.body &&
          /credit|quota|exceeded|revoked|denied/i.test(JSON.stringify(error.response.body)));
-      console.error(`📧 SendGrid failed (${status || 'unknown'}): ${error.message} — ${isFallbackable ? 'falling through to next provider' : 'giving up'}`);
+      console.error(`📧 SendGrid failed (${status || 'unknown'}): ${error.message} — ${isFallbackable ? 'falling through' : 'giving up'}`);
       if (!isFallbackable) {
         return { success: false, error: error.message };
       }
     }
   }
 
-  // Priority 2: Brevo SMTP — generous free tier (300/day), works from Railway IPs.
+  // Priority 3: Brevo SMTP.
   if (hasBrevo) {
     try {
       const info = await getSmtpTransporter().sendMail({
@@ -109,7 +130,7 @@ const sendEmail = async (to, templateName, data) => {
     }
   }
 
-  // Priority 3: Gmail SMTP — last resort (often unreliable from cloud IPs).
+  // Priority 4: Gmail SMTP — last resort.
   if (hasGmail) {
     const info = await getSmtpTransporter().sendMail({
       from: fromHeader,
