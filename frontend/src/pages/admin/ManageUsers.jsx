@@ -97,6 +97,8 @@ const ManageUsers = () => {
         return { background: '#EDE9FE', color: '#5B21B6' };
       case 'approver':
         return { background: '#DBEAFE', color: '#1E40AF' };
+      case 'maintenance':
+        return { background: '#FFEDD5', color: '#9A3412' };
       default:
         return { background: '#E5E7EB', color: '#374151' };
     }
@@ -328,6 +330,7 @@ const ManageUsers = () => {
                   <option value="requester">Requester</option>
                   <option value="approver">Approver</option>
                   <option value="admin">Admin</option>
+                  <option value="maintenance">Maintenance</option>
                 </select>
               </div>
             </div>
