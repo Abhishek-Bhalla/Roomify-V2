@@ -55,7 +55,7 @@ const MaintenanceTaskDetails = () => {
     fetchTask();
   }, [id]);
 
-  const isIncharge = user?.role === 'maintenance' && task?.assignedTo?._id === user?._id;
+  const isIncharge = user?.role === 'maintenance' && String(task?.assignedTo?._id) === String(user?.id);
   const isApprover = user?.role === 'approver' || user?.role === 'admin';
 
   const handleAccept = async () => {
