@@ -12,14 +12,32 @@ Gmail SMTP (port 465) is allowed from Railway IPs.
 4. `Procfile` — fallback if you ever switch builder.
 5. `backend/.gitignore` — keeps `.env` out of git.
 
-## 1. Get a Gmail App Password (REQUIRED — does not work with normal Gmail password)
+## 1. Pick an email provider
+
+**Recommended: SendGrid API** — works reliably from Railway's cloud egress IPs
+because it's HTTPS, not SMTP. Gmail SMTP from Railway is hit-or-miss because
+Google throttles/shared-cloud IPs.
+
+### Option A: SendGrid (default for production)
+
+1. https://signup.sendgrid.com → sign up (free tier = 100 emails/day).
+2. **Settings → Sender Authentication → Single Sender Verification** → add
+   the Gmail address you want to send from. Click the verification email.
+3. **Settings → API Keys → Create API Key** with Mail Send permission.
+   Copy the `SG.…` key (shown once).
+4. On Railway: set env vars:
+   - `SENDGRID_API_KEY` = the `SG.…` key
+   - `EMAIL_USER` = your verified sender address (used in the `from`)
+
+### Option B: Gmail SMTP (often unreliable from cloud platforms)
 
 1. Enable 2-Step Verification on the Gmail account.
-2. Go to https://myaccount.google.com/apppasswords → create one labelled "Roomify".
-3. You'll get a 16-character password. Use that as `EMAIL_PASS`.
+2. https://myaccount.google.com/apppasswords → create one labelled `Roomify`.
+3. On Railway: set `EMAIL_USER`, `EMAIL_PASS` (16-char App Password).
+   Optionally `EMAIL_PORT=587` (default; `465` sometimes times out from Railway).
 
-> If your SMTP account is something other than `@gmail.com` (e.g. Workspace/Outlook),
-> see "Using non-Gmail SMTP" below.
+If both `SENDGRID_API_KEY` and `EMAIL_USER`/`EMAIL_PASS` are set, SendGrid is used.
+Gmail is the fallback. The right way to think about it: set **one** path, not both.
 
 ## 2. Deploy backend on Railway
 
