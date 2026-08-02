@@ -4,9 +4,16 @@ const User = require('../models/User');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
-  });
+  const raw = process.env.JWT_EXPIRE;
+  // Accept either a numeric value (seconds) or a timespan string like "7d", "24h", "15m".
+  // Fall back to "7d" if JWT_EXPIRE is unset/invalid so logins never break on missing env.
+  const expiresIn =
+    !raw || raw.trim() === ''
+      ? '7d'
+      : /^\d+$/.test(raw.trim())
+        ? Number(raw.trim())
+        : raw.trim();
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn });
 };
 
 const login = async (req, res, next) => {
