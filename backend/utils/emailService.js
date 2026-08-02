@@ -6,51 +6,59 @@ if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
-// Send email using SendGrid API (primary) or SMTP (fallback)
+// Lazy-initialized Gmail SMTP transporter (kept alive across sends on the same Railway instance).
+let smtpTransporter = null;
+const getSmtpTransporter = () => {
+  if (smtpTransporter) return smtpTransporter;
+  smtpTransporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: Number(process.env.EMAIL_PORT) || 465,
+    secure: (Number(process.env.EMAIL_PORT) || 465) === 465,
+    pool: true,                 // reuse connections so cron-triggered sends are fast
+    maxConnections: 3,
+    auth: {
+      user: (process.env.EMAIL_USER || '').trim(),
+      pass: (process.env.EMAIL_PASS || '').trim()
+    }
+  });
+  return smtpTransporter;
+};
+
+// Send email using Gmail SMTP (primary on Railway) or SendGrid API (fallback).
 const sendEmail = async (to, templateName, data) => {
   try {
-    // Skip if no email configured
-    if (!process.env.SENDGRID_API_KEY && (!process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+    // Skip if no email configured at all
+    const hasSmtp = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+    const hasSendGrid = !!process.env.SENDGRID_API_KEY;
+    if (!hasSmtp && !hasSendGrid) {
       console.log(`📧 Email skipped (not configured): ${templateName} to ${to}`);
       return { success: false, reason: 'Email not configured' };
     }
 
     const template = emailTemplates[templateName](data);
 
-    // Try SendGrid first if API key is available
-    if (process.env.SENDGRID_API_KEY) {
-      const msg = {
+    // Primary: Gmail SMTP (works on Railway; SendGrid was unreliable/timing-out there).
+    if (hasSmtp) {
+      const info = await getSmtpTransporter().sendMail({
+        from: `"Roomify System" <${process.env.EMAIL_USER}>`,
         to: to,
-        from: process.env.EMAIL_USER || 'noreply@roomify.com',
         subject: template.subject,
         html: template.html
-      };
-
-      await sgMail.send(msg);
-      console.log(`📧 Email sent via SendGrid: ${templateName} to ${to}`);
-      return { success: true };
+      });
+      console.log(`📧 Email sent via Gmail SMTP: ${templateName} to ${to} (id=${info.messageId})`);
+      return { success: true, messageId: info.messageId };
     }
 
-    // Fallback to nodemailer SMTP
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: {
-        user: (process.env.EMAIL_USER || '').trim(),
-        pass: (process.env.EMAIL_PASS || '').trim()
-      }
-    });
-
-    const info = await transporter.sendMail({
-      from: `"Roomify System" <${process.env.EMAIL_USER}>`,
+    // Fallback: SendGrid API
+    const msg = {
       to: to,
+      from: process.env.EMAIL_USER || 'noreply@roomify.com',
       subject: template.subject,
       html: template.html
-    });
-
-    console.log(`📧 Email sent via SMTP: ${templateName} to ${to}`);
-    return { success: true, messageId: info.messageId };
+    };
+    await sgMail.send(msg);
+    console.log(`📧 Email sent via SendGrid: ${templateName} to ${to}`);
+    return { success: true };
   } catch (error) {
     console.error(`📧 Email failed: ${templateName} to ${to}`, error.message);
     return { success: false, error: error.message };
