@@ -16,6 +16,10 @@ const getSmtpTransporter = () => {
     secure: (Number(process.env.EMAIL_PORT) || 465) === 465,
     pool: true,                 // reuse connections so cron-triggered sends are fast
     maxConnections: 3,
+    family: 4,                  // Railway's NAT has no IPv6 outbound — force IPv4 to Google's SMTP
+    connectionTimeout: 15000,   // 15s — fail fast instead of hanging the cron for 5+ min
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
     auth: {
       user: (process.env.EMAIL_USER || '').trim(),
       pass: (process.env.EMAIL_PASS || '').trim()
