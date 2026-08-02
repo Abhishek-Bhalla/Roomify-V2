@@ -1,7 +1,7 @@
 const { body, param } = require('express-validator');
 const User = require('../models/User');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
-const { validateWorkEmail } = require('../utils/validation');
+const { validateEmail } = require('../utils/validation');
 
 const getAllUsers = async (req, res, next) => {
   try {
@@ -16,9 +16,9 @@ const createUser = async (req, res, next) => {
   try {
     const { name, email, password, role, employeeId } = req.body;
 
-    const workEmailError = validateWorkEmail(email);
-    if (workEmailError) {
-      return errorResponse(res, workEmailError, 400);
+    const emailError = validateEmail(email);
+    if (emailError) {
+      return errorResponse(res, emailError, 400);
     }
 
     const existingUser = await User.findOne({ email });
@@ -204,9 +204,9 @@ const updateUserValidation = [
   body('role').optional().isIn(['admin', 'approver', 'requester', 'maintenance']).withMessage('Invalid role')
 ];
 
-// Custom work email validation for express-validator
-const workEmailValidator = (value) => {
-  const error = validateWorkEmail(value);
+// Custom email validation for express-validator
+const emailValidator = (value) => {
+  const error = validateEmail(value);
   if (error) {
     throw new Error(error);
   }
