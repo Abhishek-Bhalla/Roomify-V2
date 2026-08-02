@@ -48,22 +48,23 @@ const getSmtpTransporter = () => {
 };
 
 // Send email using SendGrid API → Brevo SMTP → Gmail SMTP (in that order).
+// If SendGrid returns 401/403 (auth/quota), we automatically fall through to Brevo.
 const sendEmail = async (to, templateName, data) => {
-  try {
-    const hasSendGrid = !!process.env.SENDGRID_API_KEY;
-    const hasBrevo = !!(process.env.BREVO_USER && process.env.BREVO_PASS);
-    const hasGmail = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+  const hasSendGrid = !!process.env.SENDGRID_API_KEY;
+  const hasBrevo = !!(process.env.BREVO_USER && process.env.BREVO_PASS);
+  const hasGmail = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
 
-    if (!hasSendGrid && !hasBrevo && !hasGmail) {
-      console.log(`📧 Email skipped (not configured): ${templateName} to ${to}`);
-      return { success: false, reason: 'Email not configured' };
-    }
+  if (!hasSendGrid && !hasBrevo && !hasGmail) {
+    console.log(`📧 Email skipped (not configured): ${templateName} to ${to}`);
+    return { success: false, reason: 'Email not configured' };
+  }
 
-    const template = emailTemplates[templateName](data);
-    const fromAddress = process.env.BREVO_USER || process.env.EMAIL_USER || 'noreply@roomify.com';
+  const template = emailTemplates[templateName](data);
+  const fromAddress = process.env.BREVO_USER || process.env.EMAIL_USER || 'noreply@roomify.com';
 
-    // Priority 1: SendGrid API over HTTPS — most reliable from any platform.
-    if (hasSendGrid) {
+  // Priority 1: SendGrid API over HTTPS — most reliable when it works.
+  if (hasSendGrid) {
+    try {
       const msg = {
         to,
         from: fromAddress,
@@ -73,10 +74,24 @@ const sendEmail = async (to, templateName, data) => {
       const [resp] = await sgMail.send(msg);
       console.log(`📧 Email sent via SendGrid: ${templateName} to ${to} (status=${resp.statusCode})`);
       return { success: true, messageId: resp.headers['x-message-id'] };
+    } catch (error) {
+      // 401 (bad key), 403 (unverified sender / blocked), 429 (rate limit):
+      // try the next provider instead of failing the whole email.
+      const status = error.code || error.response?.statusCode;
+      const isFallbackable = [401, 403, 429].includes(status) ||
+        (error.response && error.response.body &&
+         /credit|quota|exceeded|revoked|denied/i.test(JSON.stringify(error.response.body)));
+      console.error(`📧 SendGrid failed (${status || 'unknown'}): ${error.message} — ${isFallbackable ? 'falling through to next provider' : 'giving up'}`);
+      if (!isFallbackable) {
+        return { success: false, error: error.message };
+      }
+      // fall through
     }
+  }
 
-    // Priority 2: Brevo SMTP — generous free tier (300/day), works from Railway IPs.
-    if (hasBrevo) {
+  // Priority 2: Brevo SMTP — generous free tier (300/day), works from Railway IPs.
+  if (hasBrevo) {
+    try {
       const info = await getSmtpTransporter().sendMail({
         from: `"Roomify System" <${fromAddress}>`,
         to,
@@ -85,9 +100,14 @@ const sendEmail = async (to, templateName, data) => {
       });
       console.log(`📧 Email sent via Brevo SMTP: ${templateName} to ${to} (id=${info.messageId})`);
       return { success: true, messageId: info.messageId };
+    } catch (error) {
+      console.error(`📧 Brevo SMTP failed: ${error.message} — trying Gmail`);
+      // fall through to Gmail
     }
+  }
 
-    // Priority 3: Gmail SMTP — last resort (often unreliable from cloud IPs).
+  // Priority 3: Gmail SMTP — last resort (often unreliable from cloud IPs).
+  if (hasGmail) {
     const info = await getSmtpTransporter().sendMail({
       from: `"Roomify System" <${fromAddress}>`,
       to,
@@ -96,13 +116,9 @@ const sendEmail = async (to, templateName, data) => {
     });
     console.log(`📧 Email sent via Gmail SMTP: ${templateName} to ${to} (id=${info.messageId})`);
     return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error(`📧 Email failed [${error.code || 'unknown'}]: ${templateName} to ${to} — ${error.message}`);
-    if (error.response && error.response.body) {
-      console.error('📧 Provider response:', JSON.stringify(error.response.body));
-    }
-    return { success: false, error: error.message };
   }
+
+  return { success: false, error: 'All providers failed' };
 };
 
 // Email templates
