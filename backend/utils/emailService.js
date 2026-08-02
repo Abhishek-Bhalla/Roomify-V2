@@ -36,41 +36,43 @@ const getSmtpTransporter = () => {
   return smtpTransporter;
 };
 
-// Send email using Gmail SMTP (primary on Railway) or SendGrid API (fallback).
+// Send email using SendGrid API (preferred on Railway/cloud) or Gmail SMTP (fallback).
 const sendEmail = async (to, templateName, data) => {
   try {
     // Skip if no email configured at all
-    const hasSmtp = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
     const hasSendGrid = !!process.env.SENDGRID_API_KEY;
-    if (!hasSmtp && !hasSendGrid) {
+    const hasSmtp = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+    if (!hasSendGrid && !hasSmtp) {
       console.log(`📧 Email skipped (not configured): ${templateName} to ${to}`);
       return { success: false, reason: 'Email not configured' };
     }
 
     const template = emailTemplates[templateName](data);
 
-    // Primary: Gmail SMTP (works on Railway; SendGrid was unreliable/timing-out there).
-    if (hasSmtp) {
-      const info = await getSmtpTransporter().sendMail({
-        from: `"Roomify System" <${process.env.EMAIL_USER}>`,
-        to: to,
+    // Primary: SendGrid API over HTTPS. This is the only path that reliably
+    // works from Railway/cloud egress IPs — Gmail SMTP gets throttled or
+    // rejected at the IP level on cloud platforms.
+    if (hasSendGrid) {
+      const msg = {
+        to,
+        from: process.env.EMAIL_USER || 'noreply@roomify.com',
         subject: template.subject,
         html: template.html
-      });
-      console.log(`📧 Email sent via Gmail SMTP: ${templateName} to ${to} (id=${info.messageId})`);
-      return { success: true, messageId: info.messageId };
+      };
+      const [resp] = await sgMail.send(msg);
+      console.log(`📧 Email sent via SendGrid: ${templateName} to ${to} (status=${resp.statusCode})`);
+      return { success: true, messageId: resp.headers['x-message-id'] };
     }
 
-    // Fallback: SendGrid API
-    const msg = {
-      to: to,
-      from: process.env.EMAIL_USER || 'noreply@roomify.com',
+    // Fallback: Gmail SMTP via nodemailer (works on Render / local / dedicated IPs)
+    const info = await getSmtpTransporter().sendMail({
+      from: `"Roomify System" <${process.env.EMAIL_USER}>`,
+      to,
       subject: template.subject,
       html: template.html
-    };
-    await sgMail.send(msg);
-    console.log(`📧 Email sent via SendGrid: ${templateName} to ${to}`);
-    return { success: true };
+    });
+    console.log(`📧 Email sent via Gmail SMTP: ${templateName} to ${to} (id=${info.messageId})`);
+    return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error(`📧 Email failed: ${templateName} to ${to}`, error.message);
     return { success: false, error: error.message };
