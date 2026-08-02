@@ -5,11 +5,16 @@ const { successResponse, errorResponse } = require('../utils/apiResponse');
 
 const getAllRooms = async (req, res, next) => {
   try {
-    const { status, minCapacity } = req.query;
+    const { status, minCapacity, includeMaintenance } = req.query;
 
     const filter = {};
     if (status) filter.status = status;
     if (minCapacity) filter.capacity = { $gte: parseInt(minCapacity) };
+    // By default, hide rooms currently in any maintenance lifecycle
+    // (admin/approver views can opt-in with ?includeMaintenance=true)
+    if (!includeMaintenance || includeMaintenance !== 'true') {
+      filter.maintenanceStatus = 'none';
+    }
 
     const rooms = await Room.find(filter).sort({ createdAt: -1 });
     return successResponse(res, { rooms }, 'Rooms retrieved successfully');
@@ -210,6 +215,7 @@ const checkAffectedBookings = async (req, res, next) => {
     const availableRooms = await Room.find({
       _id: { $ne: id },
       status: 'available',
+      maintenanceStatus: 'none',
       capacity: { $gte: room.capacity }
     }).sort({ capacity: 1 });
 
@@ -238,8 +244,8 @@ const relocateBookings = async (req, res, next) => {
       return errorResponse(res, 'Target room not found', 404);
     }
 
-    if (targetRoom.status !== 'available') {
-      return errorResponse(res, 'Target room must be available', 400);
+    if (targetRoom.status !== 'available' || targetRoom.maintenanceStatus !== 'none') {
+      return errorResponse(res, 'Target room must be available and not under maintenance', 400);
     }
 
     const today = new Date();
@@ -313,7 +319,7 @@ const updateRoomValidation = [
   body('name').optional().trim().notEmpty().withMessage('Room name cannot be empty'),
   body('capacity').optional().isInt({ min: 1 }).withMessage('Capacity must be at least 1'),
   body('facilities').optional().isArray().withMessage('Facilities must be an array'),
-  body('status').optional().isIn(['available', 'maintenance']).withMessage('Invalid status')
+  body('status').optional().isIn(['available', 'maintenance', 'under_maintenance', 'maintenance_assigned', 'maintenance_in_progress', 'maintenance_review_pending']).withMessage('Invalid status')
 ];
 
 const roomIdValidation = [

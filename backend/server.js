@@ -7,7 +7,9 @@ const { startNotificationScheduler } = require('./scheduler/notifications');
 dotenv.config();
 connectDB().then(async () => {
   const Booking = require('./models/Booking');
+  const Maintenance = require('./models/Maintenance');
   await Booking.initializeCounter();
+  await Maintenance.initializeCounter();
   const PORT = process.env.PORT || 5000;
   // Railway/Render require binding to 0.0.0.0
   app.listen(PORT, '0.0.0.0', () => {

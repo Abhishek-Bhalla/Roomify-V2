@@ -46,11 +46,22 @@ const getSmtpTransporter = () => {
 };
 
 // Resolve the visible "From" address: explicit override > Brevo/Gmail user > fallback.
+// If using Resend (HTTPS provider), unverified external domains like gmail.com
+// get rejected with 403, so when no override is set we default to Resend's
+// allowed-by-default onboarding sender.
 const getFromAddress = () => {
-  // Optional override — lets you send "from" any Gmail while authenticating with Brevo.
-  // Example: BREVO_FROM=roomifyapprover@gmail.com while BREVO_USER=8xxx@smtp-brevo.com
   if (process.env.BREVO_FROM) return process.env.BREVO_FROM.trim();
   if (process.env.EMAIL_FROM) return process.env.EMAIL_FROM.trim();
+  // On Resend, if the configured user is a gmail.com/outlook.com/etc address,
+  // Resend will reject it as unverified domain. Route around that by using
+  // the onboarding sender unless the user is on a verified custom domain.
+  if (process.env.RESEND_API_KEY) {
+    const configured = (process.env.BREVO_USER || process.env.EMAIL_USER || '').trim();
+    if (!configured || /(@gmail\.com|@googlemail\.com|@yahoo\.com|@outlook\.com|@hotmail\.com|@live\.com)$/i.test(configured)) {
+      return 'onboarding@resend.dev';
+    }
+    return configured;
+  }
   return (process.env.BREVO_USER || process.env.EMAIL_USER || 'noreply@roomify.com').trim();
 };
 

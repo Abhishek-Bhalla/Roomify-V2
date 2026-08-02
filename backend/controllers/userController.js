@@ -194,14 +194,14 @@ const createUserValidation = [
   body('employeeId').trim().notEmpty().withMessage('Employee ID is required'),
   body('email').isEmail().withMessage('Please provide a valid email'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('role').optional().isIn(['admin', 'approver', 'requester']).withMessage('Invalid role')
+  body('role').optional().isIn(['admin', 'approver', 'requester', 'maintenance']).withMessage('Invalid role')
 ];
 
 const updateUserValidation = [
   body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
   body('employeeId').optional().trim().notEmpty().withMessage('Employee ID cannot be empty'),
   body('email').optional().isEmail().withMessage('Please provide a valid email'),
-  body('role').optional().isIn(['admin', 'approver', 'requester']).withMessage('Invalid role')
+  body('role').optional().isIn(['admin', 'approver', 'requester', 'maintenance']).withMessage('Invalid role')
 ];
 
 // Custom work email validation for express-validator

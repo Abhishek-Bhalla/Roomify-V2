@@ -37,7 +37,7 @@ const createBooking = async (req, res, next) => {
       return errorResponse(res, 'Room not found', 404);
     }
 
-    if (room.status !== 'available') {
+    if (room.status !== 'available' || room.maintenanceStatus !== 'none') {
       return errorResponse(res, 'Room is not available for booking', 400);
     }
 
