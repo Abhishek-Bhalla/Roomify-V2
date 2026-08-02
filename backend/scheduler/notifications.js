@@ -87,7 +87,18 @@ const checkCompletedBookingsAndSendFeedbackEmail = async () => {
         });
 
         if (!existingFeedback) {
-          // Build feedback URL - use Render URL or fallback
+          // Dedupe: skip if we've ALREADY sent a feedback-request email for this booking.
+          // The Notification collection tracks any email we sent for this booking.
+          const alreadySent = await Notification.findOne({
+            bookingId: booking._id,
+            type: 'feedback_request'
+          });
+
+          if (alreadySent) {
+            continue;
+          }
+
+          // Build feedback URL - use the configured frontend URL or fallback
           const frontendUrl = process.env.FRONTEND_URL || 'https://roomify-v2-frontend-xv85.vercel.app';
           const feedbackUrl = `${frontendUrl}/requester/feedback?bookingId=${booking._id}`;
 
@@ -106,6 +117,15 @@ const checkCompletedBookingsAndSendFeedbackEmail = async () => {
               feedbackUrl
             }
           );
+
+          // Record that we sent the feedback request so the next cron tick won't resend.
+          await Notification.create({
+            userId: booking.userId._id,
+            bookingId: booking._id,
+            type: 'feedback_request',
+            title: 'Feedback Request',
+            message: `Feedback request sent for ${booking.roomId.name} on ${new Date(booking.date).toLocaleDateString()}`
+          });
 
           console.log(`Feedback request email sent for booking ${booking._id}`);
         }
