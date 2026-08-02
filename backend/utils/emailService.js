@@ -74,7 +74,11 @@ const sendEmail = async (to, templateName, data) => {
     console.log(`📧 Email sent via Gmail SMTP: ${templateName} to ${to} (id=${info.messageId})`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error(`📧 Email failed: ${templateName} to ${to}`, error.message);
+    console.error(`📧 Email failed [${error.code || 'unknown'}]: ${templateName} to ${to} — ${error.message}`);
+    // If SendGrid failed, log the response body so we can see *why* it rejected us.
+    if (error.response && error.response.body) {
+      console.error('📧 SendGrid response:', JSON.stringify(error.response.body));
+    }
     return { success: false, error: error.message };
   }
 };
