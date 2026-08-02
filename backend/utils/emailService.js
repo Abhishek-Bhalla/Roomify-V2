@@ -10,16 +10,24 @@ if (process.env.SENDGRID_API_KEY) {
 let smtpTransporter = null;
 const getSmtpTransporter = () => {
   if (smtpTransporter) return smtpTransporter;
+  // Port 587 + STARTTLS is the path that consistently works from Railway egress IPs.
+  // Port 465 sometimes times out depending on the Railway gateway, even though it's listed as supported.
+  const port = Number(process.env.EMAIL_PORT) || 587;
   smtpTransporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: Number(process.env.EMAIL_PORT) || 465,
-    secure: (Number(process.env.EMAIL_PORT) || 465) === 465,
+    port,
+    secure: port === 465,       // 465 = implicit TLS, 587 = STARTTLS (both encrypted either way)
+    requireTLS: port === 587,   // upgrade STARTTLS so we still get TLS on port 587
     pool: true,                 // reuse connections so cron-triggered sends are fast
     maxConnections: 3,
     family: 4,                  // Railway's NAT has no IPv6 outbound — force IPv4 to Google's SMTP
-    connectionTimeout: 15000,   // 15s — fail fast instead of hanging the cron for 5+ min
-    greetingTimeout: 10000,
-    socketTimeout: 20000,
+    connectionTimeout: 20000,   // 20s — fail fast instead of hanging the cron for 5+ min
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
+    tls: {
+      // Don't fail just because the cert chain looks unusual on some gateway IPs
+      rejectUnauthorized: true
+    },
     auth: {
       user: (process.env.EMAIL_USER || '').trim(),
       pass: (process.env.EMAIL_PASS || '').trim()
