@@ -51,7 +51,7 @@ const ApproverDashboard = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Approver Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
           <p className="text-gray-500 text-sm mt-1">Review and manage booking requests</p>
         </div>
         <Button variant="outline" onClick={fetchStats} disabled={isLoading} className="w-full sm:w-auto">
