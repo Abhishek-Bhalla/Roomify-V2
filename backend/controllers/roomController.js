@@ -10,10 +10,14 @@ const getAllRooms = async (req, res, next) => {
     const filter = {};
     if (status) filter.status = status;
     if (minCapacity) filter.capacity = { $gte: parseInt(minCapacity) };
-    // By default, hide rooms currently in any maintenance lifecycle
-    // (admin/approver views can opt-in with ?includeMaintenance=true)
+    // By default, hide rooms currently in any maintenance lifecycle.
+    // Excludes the rich lifecycle states; matches missing-field docs (legacy
+    // rooms created before maintenanceStatus was added) as well as 'none'.
+    // Admin/approver views can opt-in with ?includeMaintenance=true.
     if (!includeMaintenance || includeMaintenance !== 'true') {
-      filter.maintenanceStatus = 'none';
+      filter.maintenanceStatus = {
+        $nin: ['under_maintenance', 'maintenance_assigned', 'in_progress', 'review_pending']
+      };
     }
 
     const rooms = await Room.find(filter).sort({ createdAt: -1 });
@@ -215,7 +219,9 @@ const checkAffectedBookings = async (req, res, next) => {
     const availableRooms = await Room.find({
       _id: { $ne: id },
       status: 'available',
-      maintenanceStatus: 'none',
+      maintenanceStatus: {
+        $nin: ['under_maintenance', 'maintenance_assigned', 'in_progress', 'review_pending']
+      },
       capacity: { $gte: room.capacity }
     }).sort({ capacity: 1 });
 
@@ -244,7 +250,7 @@ const relocateBookings = async (req, res, next) => {
       return errorResponse(res, 'Target room not found', 404);
     }
 
-    if (targetRoom.status !== 'available' || targetRoom.maintenanceStatus !== 'none') {
+    if (targetRoom.status !== 'available' || ['under_maintenance', 'maintenance_assigned', 'in_progress', 'review_pending'].includes(targetRoom.maintenanceStatus)) {
       return errorResponse(res, 'Target room must be available and not under maintenance', 400);
     }
 

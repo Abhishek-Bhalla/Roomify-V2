@@ -6,6 +6,10 @@ const { successResponse, errorResponse } = require('../utils/apiResponse');
 const { createNotification } = require('./notificationController');
 const { sendBookingCreatedEmail, sendBookingApprovedEmail, sendBookingRejectedEmail, sendBookingRequestForApprovalEmail } = require('../utils/emailService');
 
+// Maintenance lifecycle states that block booking. 'none' or undefined
+// (legacy rooms predating the maintenanceStatus field) are treated as available.
+const MAINTENANCE_ACTIVE = ['under_maintenance', 'maintenance_assigned', 'in_progress', 'review_pending'];
+
 const checkConflict = async (roomId, date, startTime, endTime, excludeBookingId = null) => {
   const query = {
     roomId,
@@ -37,7 +41,7 @@ const createBooking = async (req, res, next) => {
       return errorResponse(res, 'Room not found', 404);
     }
 
-    if (room.status !== 'available' || room.maintenanceStatus !== 'none') {
+    if (room.status !== 'available' || MAINTENANCE_ACTIVE.includes(room.maintenanceStatus)) {
       return errorResponse(res, 'Room is not available for booking', 400);
     }
 

@@ -5,6 +5,11 @@ const User = require('../models/User');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 const { createNotification } = require('./notificationController');
 
+// Maintenance lifecycle states that block booking/maintenance. Legacy
+// rooms (created before the maintenanceStatus field) are treated as
+// 'none' (i.e. not in any maintenance state).
+const MAINTENANCE_ACTIVE = ['under_maintenance', 'maintenance_assigned', 'in_progress', 'review_pending'];
+
 // Helper: append an audit log entry atomically.
 const addAuditLog = async (maintenanceId, action, byUser, note = '') => {
   await Maintenance.findByIdAndUpdate(maintenanceId, {
@@ -40,7 +45,7 @@ const createMaintenance = async (req, res, next) => {
       return errorResponse(res, 'Room not found', 404);
     }
 
-    if (room.maintenanceStatus !== 'none') {
+    if (MAINTENANCE_ACTIVE.includes(room.maintenanceStatus)) {
       return errorResponse(res, `Room is already in maintenance (${room.maintenanceStatus})`, 400);
     }
 
