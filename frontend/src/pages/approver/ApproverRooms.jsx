@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Plus, Edit2, Trash2, Eye, Power, X } from 'lucide-react';
+import { RefreshCw, Plus, Edit2, Trash2, Eye, Power, X, Wrench } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
 import Button from '../../components/common/Button';
-import { roomAPI } from '../../services/api';
+import { roomAPI, userAPI, maintenanceAPI } from '../../services/api';
+
+const CATEGORIES = ['electrical', 'hvac', 'furniture', 'cleaning', 'renovation', 'plumbing', 'internet', 'projector', 'other'];
+const PRIORITIES = ['low', 'medium', 'high', 'critical'];
 
 const ApproverRooms = () => {
   const [rooms, setRooms] = useState([]);
@@ -13,6 +16,19 @@ const ApproverRooms = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ status: 'all', search: '' });
+
+  // Maintenance modal state
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [maintenanceRoom, setMaintenanceRoom] = useState(null);
+  const [maintenanceForm, setMaintenanceForm] = useState({
+    issueCategory: 'electrical',
+    priority: 'medium',
+    description: '',
+    assignedTo: '',
+    expectedCompletion: '',
+  });
+  const [maintenanceUsers, setMaintenanceUsers] = useState([]);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     capacity: '',
@@ -54,8 +70,21 @@ const ApproverRooms = () => {
     }
   };
 
+  const fetchMaintenanceUsers = async () => {
+    try {
+      const res = await userAPI.getAll();
+      const users = (res.data.data.users || []).filter(
+        (u) => u.role === 'maintenance' && u.status === 'active'
+      );
+      setMaintenanceUsers(users);
+    } catch (err) {
+      console.error('Failed to fetch maintenance users:', err);
+    }
+  };
+
   useEffect(() => {
     fetchRooms();
+    fetchMaintenanceUsers();
   }, []);
 
   const handleAdd = () => {
@@ -148,6 +177,46 @@ const ApproverRooms = () => {
     }
   };
 
+  const handleOpenMaintenance = (room) => {
+    if (room.maintenanceStatus && room.maintenanceStatus !== 'none') {
+      alert('Room is already in maintenance.');
+      return;
+    }
+    setMaintenanceRoom(room);
+    setMaintenanceForm({
+      issueCategory: 'electrical',
+      priority: 'medium',
+      description: '',
+      assignedTo: '',
+      expectedCompletion: '',
+    });
+    setShowMaintenanceModal(true);
+  };
+
+  const handleSubmitMaintenance = async () => {
+    if (!maintenanceRoom) return;
+    try {
+      setMaintenanceLoading(true);
+      const payload = {
+        roomId: maintenanceRoom._id,
+        issueCategory: maintenanceForm.issueCategory,
+        priority: maintenanceForm.priority,
+        description: maintenanceForm.description,
+      };
+      if (maintenanceForm.assignedTo) payload.assignedTo = maintenanceForm.assignedTo;
+      if (maintenanceForm.expectedCompletion) payload.expectedCompletion = maintenanceForm.expectedCompletion;
+      await maintenanceAPI.create(payload);
+      setShowMaintenanceModal(false);
+      setMaintenanceRoom(null);
+      fetchRooms();
+      alert('Room marked under maintenance. A task has been assigned.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to create maintenance task');
+    } finally {
+      setMaintenanceLoading(false);
+    }
+  };
+
   const filteredRooms = rooms.filter(room => {
     if (filters.status !== 'all' && room.status !== filters.status) return false;
     if (filters.search && !room.name.toLowerCase().includes(filters.search.toLowerCase()) &&
@@ -222,7 +291,11 @@ const ApproverRooms = () => {
               >
                 <option value="all">All Status</option>
                 <option value="available">Available</option>
-                <option value="maintenance">Maintenance</option>
+                <option value="maintenance">Maintenance (legacy)</option>
+                <option value="under_maintenance">Under Maintenance</option>
+                <option value="maintenance_assigned">Maintenance Assigned</option>
+                <option value="maintenance_in_progress">Maintenance In Progress</option>
+                <option value="maintenance_review_pending">Review Pending</option>
               </select>
             </div>
           </div>
@@ -307,8 +380,17 @@ const ApproverRooms = () => {
                   Edit
                 </button>
                 <button
+                  onClick={() => handleOpenMaintenance(room)}
+                  disabled={room.maintenanceStatus && room.maintenanceStatus !== 'none'}
+                  className="px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 hover:bg-orange-50 text-orange-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={room.maintenanceStatus && room.maintenanceStatus !== 'none' ? 'Already under maintenance' : 'Mark under maintenance'}
+                >
+                  <Wrench size={14} />
+                </button>
+                <button
                   onClick={() => toggleStatus(room)}
                   className="px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 hover:bg-yellow-50 text-yellow-600"
+                  title="Quick toggle legacy status"
                 >
                   <Power size={14} />
                 </button>
@@ -498,6 +580,111 @@ const ApproverRooms = () => {
             <div className="mt-6">
               <Button variant="outline" onClick={() => setShowViewModal(false)} className="w-full">
                 Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    {/* Mark Under Maintenance Modal */}
+      {showMaintenanceModal && maintenanceRoom && (
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">Mark Under Maintenance</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  {maintenanceRoom.name} • {maintenanceRoom.building} - {maintenanceRoom.floor}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowMaintenanceModal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Issue Category *</label>
+                  <select
+                    value={maintenanceForm.issueCategory}
+                    onChange={(e) => setMaintenanceForm({ ...maintenanceForm, issueCategory: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority *</label>
+                  <select
+                    value={maintenanceForm.priority}
+                    onChange={(e) => setMaintenanceForm({ ...maintenanceForm, priority: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {PRIORITIES.map((p) => (
+                      <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  rows={3}
+                  value={maintenanceForm.description}
+                  onChange={(e) => setMaintenanceForm({ ...maintenanceForm, description: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Briefly describe the issue..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
+                <select
+                  value={maintenanceForm.assignedTo}
+                  onChange={(e) => setMaintenanceForm({ ...maintenanceForm, assignedTo: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Auto-assign (least busy)</option>
+                  {maintenanceUsers.map((u) => (
+                    <option key={u._id} value={u._id}>
+                      {u.name} ({u.employeeId || u.email})
+                    </option>
+                  ))}
+                </select>
+                {maintenanceUsers.length === 0 && (
+                  <p className="text-xs text-yellow-700 mt-1">
+                    No active maintenance incharge found — ask an admin to create one.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Expected Completion</label>
+                <input
+                  type="date"
+                  value={maintenanceForm.expectedCompletion}
+                  onChange={(e) => setMaintenanceForm({ ...maintenanceForm, expectedCompletion: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="p-3 rounded-lg bg-orange-50 border border-orange-200 text-sm text-orange-800">
+                The room will be hidden from requester searches until maintenance is approved and the room is restored.
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <Button onClick={handleSubmitMaintenance} disabled={maintenanceLoading} className="flex-1">
+                {maintenanceLoading ? 'Creating...' : 'Mark Under Maintenance'}
+              </Button>
+              <Button variant="outline" onClick={() => setShowMaintenanceModal(false)} className="flex-1">
+                Cancel
               </Button>
             </div>
           </div>

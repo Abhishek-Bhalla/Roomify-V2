@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Clock, CheckCircle, DoorOpen, Users, RefreshCw } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Clock, CheckCircle, DoorOpen, Users, RefreshCw, Wrench, ArrowRight } from 'lucide-react';
 import StatCard from '../../components/common/StatCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import Button from '../../components/common/Button';
-import { bookingAPI, roomAPI, userAPI } from '../../services/api';
+import { bookingAPI, roomAPI, userAPI, maintenanceAPI } from '../../services/api';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -13,20 +14,29 @@ const AdminDashboard = () => {
     totalUsers: 0,
   });
   const [recentBookings, setRecentBookings] = useState([]);
+  const [maintenanceOverview, setMaintenanceOverview] = useState({ active: 0, reviewPending: 0 });
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [bookingsRes, roomsRes, usersRes] = await Promise.all([
+      const [bookingsRes, roomsRes, usersRes, maintenanceRes] = await Promise.all([
         bookingAPI.getAll(),
-        roomAPI.getAll(),
+        roomAPI.getAll({ includeMaintenance: 'true' }),
         userAPI.getAll(),
+        maintenanceAPI.getAll({ limit: 50 }).catch(() => null),
       ]);
 
       const allBookings = bookingsRes.data.data.bookings;
       const rooms = roomsRes.data.data.rooms;
       const users = usersRes.data.data.users;
+      const maintenanceTasks = maintenanceRes?.data?.data?.tasks || [];
+
+      const activeStatuses = ['assigned', 'in_progress', 'waiting_for_parts', 'review_pending', 'additional_work_required'];
+      setMaintenanceOverview({
+        active: maintenanceTasks.filter((t) => activeStatuses.includes(t.status)).length,
+        reviewPending: maintenanceTasks.filter((t) => t.status === 'review_pending').length,
+      });
 
       setStats({
         pendingRequests: allBookings.filter(b => b.status === 'pending').length,
@@ -125,6 +135,35 @@ const AdminDashboard = () => {
               </div>
             ))
           )}
+        </div>
+      </div>
+
+      {/* Maintenance Overview */}
+      <div className="bg-white rounded-xl border p-4 md:p-5" style={{ borderColor: '#E5E7EB' }}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <Wrench size={18} className="text-orange-500" />
+            Maintenance Overview
+          </h2>
+          <Link
+            to="/admin/maintenance"
+            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+          >
+            View all <ArrowRight size={14} />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-4 rounded-xl" style={{ background: '#FFF7ED' }}>
+            <p className="text-sm text-gray-600">Active Tasks</p>
+            <p className="text-3xl font-bold text-orange-700 mt-1">{maintenanceOverview.active}</p>
+            <p className="text-xs text-gray-500 mt-1">Assigned, in progress, waiting for parts</p>
+          </div>
+          <div className="p-4 rounded-xl" style={{ background: '#FFE4E6' }}>
+            <p className="text-sm text-gray-600">Review Pending</p>
+            <p className="text-3xl font-bold text-rose-700 mt-1">{maintenanceOverview.reviewPending}</p>
+            <p className="text-xs text-gray-500 mt-1">Awaiting approver sign-off</p>
+          </div>
         </div>
       </div>
     </div>

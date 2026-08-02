@@ -13,6 +13,9 @@ import {
   Upload,
   X,
   Star,
+  Wrench,
+  History,
+  BarChart3,
 } from 'lucide-react';
 import RLogo from '../../assets/R.png';
 
@@ -27,6 +30,8 @@ const Sidebar = ({ onClose }) => {
       { to: '/admin/bulk-upload', icon: Upload, label: 'Bulk Upload' },
       { to: '/admin/bookings', icon: ClipboardCheck, label: 'View Bookings' },
       { to: '/admin/rooms', icon: DoorOpen, label: 'View Rooms' },
+      { to: '/admin/maintenance', icon: Wrench, label: 'Maintenance' },
+      { to: '/admin/maintenance/analytics', icon: BarChart3, label: 'Maintenance Stats' },
       { to: '/admin/schedule', icon: Calendar, label: 'Schedule' },
     ],
     approver: [
@@ -35,6 +40,11 @@ const Sidebar = ({ onClose }) => {
       { to: '/approver/requests', icon: ClipboardCheck, label: 'Booking Requests' },
       { to: '/approver/schedule', icon: Calendar, label: 'Schedule' },
       { to: '/approver/feedback', icon: Star, label: 'Feedback' },
+    ],
+    maintenance: [
+      { to: '/maintenance', icon: LayoutDashboard, label: 'Dashboard' },
+      { to: '/maintenance/tasks', icon: Wrench, label: 'My Tasks' },
+      { to: '/maintenance/history', icon: History, label: 'History' },
     ],
     requester: [
       { to: '/requester', icon: LayoutDashboard, label: 'Dashboard' },

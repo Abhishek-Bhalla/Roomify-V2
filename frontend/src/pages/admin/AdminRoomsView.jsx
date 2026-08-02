@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { RefreshCw, Eye, Wrench } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
 import Button from '../../components/common/Button';
 import { roomAPI } from '../../services/api';
@@ -13,7 +14,8 @@ const AdminRoomsView = () => {
   const fetchRooms = async () => {
     try {
       setIsLoading(true);
-      const response = await roomAPI.getAll();
+      // Admin view: include rooms currently in maintenance
+      const response = await roomAPI.getAll({ includeMaintenance: 'true' });
       setRooms(response.data.data.rooms);
     } catch (err) {
       console.error('Failed to fetch rooms:', err);
@@ -97,14 +99,25 @@ const AdminRoomsView = () => {
                 )}
               </div>
 
-              <button
-                onClick={() => handleView(room)}
-                className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-50"
-                style={{ border: '1px solid #E5E7EB', color: '#374151' }}
-              >
-                <Eye size={16} className="inline mr-2" />
-                View Details
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleView(room)}
+                  className="flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 hover:bg-gray-50 flex items-center justify-center gap-1"
+                  style={{ border: '1px solid #E5E7EB', color: '#374151' }}
+                >
+                  <Eye size={14} />
+                  View
+                </button>
+                <Link
+                  to={`/admin/maintenance?roomId=${room._id}`}
+                  className="flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 hover:bg-orange-50 text-orange-600 flex items-center justify-center gap-1"
+                  style={{ border: '1px solid #E5E7EB' }}
+                  title="View maintenance history"
+                >
+                  <Wrench size={14} />
+                  History
+                </Link>
+              </div>
             </div>
           ))
         )}
@@ -150,6 +163,17 @@ const AdminRoomsView = () => {
                 <p className="text-sm text-gray-500">Status</p>
                 <StatusBadge status={selectedRoom.status} />
               </div>
+              {selectedRoom.maintenanceStatus && selectedRoom.maintenanceStatus !== 'none' && (
+                <div>
+                  <p className="text-sm text-gray-500">Maintenance Status</p>
+                  <StatusBadge status={selectedRoom.maintenanceStatus} />
+                  {selectedRoom.lastMaintenanceDate && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Last maintained: {new Date(selectedRoom.lastMaintenanceDate).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex gap-3 mt-6">
               <Button variant="outline" onClick={() => setShowModal(false)} className="flex-1">

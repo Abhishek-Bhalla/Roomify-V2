@@ -11,6 +11,8 @@ import AdminBulkUpload from './pages/admin/AdminBulkUpload';
 import AdminBookingsView from './pages/admin/AdminBookingsView';
 import AdminRoomsView from './pages/admin/AdminRoomsView';
 import AdminScheduleView from './pages/admin/AdminScheduleView';
+import AdminMaintenanceView from './pages/admin/AdminMaintenanceView';
+import MaintenanceAnalytics from './pages/admin/MaintenanceAnalytics';
 
 import ApproverDashboard from './pages/approver/ApproverDashboard';
 import ApproverRooms from './pages/approver/ApproverRooms';
@@ -23,6 +25,11 @@ import SearchRooms from './pages/requester/SearchRooms';
 import MyBookings from './pages/requester/MyBookings';
 import RequesterScheduleView from './pages/requester/RequesterScheduleView';
 import MyFeedback from './pages/requester/MyFeedback';
+
+import MaintenanceDashboard from './pages/maintenance/MaintenanceDashboard';
+import MaintenanceTasks from './pages/maintenance/MaintenanceTasks';
+import MaintenanceTaskDetails from './pages/maintenance/MaintenanceTaskDetails';
+import MaintenanceHistory from './pages/maintenance/MaintenanceHistory';
 
 function App() {
   return (
@@ -45,6 +52,8 @@ function App() {
             <Route path="bulk-upload" element={<AdminBulkUpload />} />
             <Route path="bookings" element={<AdminBookingsView />} />
             <Route path="rooms" element={<AdminRoomsView />} />
+            <Route path="maintenance" element={<AdminMaintenanceView />} />
+            <Route path="maintenance/analytics" element={<MaintenanceAnalytics />} />
             <Route path="schedule" element={<AdminScheduleView />} />
           </Route>
 
@@ -78,6 +87,21 @@ function App() {
             <Route path="bookings" element={<MyBookings />} />
             <Route path="schedule" element={<RequesterScheduleView />} />
             <Route path="feedback" element={<MyFeedback />} />
+          </Route>
+
+          {/* Maintenance Incharge Routes */}
+          <Route
+            path="/maintenance"
+            element={
+              <ProtectedRoute allowedRoles={['maintenance', 'admin']}>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<MaintenanceDashboard />} />
+            <Route path="tasks" element={<MaintenanceTasks />} />
+            <Route path="tasks/:id" element={<MaintenanceTaskDetails />} />
+            <Route path="history" element={<MaintenanceHistory />} />
           </Route>
 
           <Route path="/" element={<Navigate to="/login" replace />} />

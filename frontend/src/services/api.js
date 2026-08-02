@@ -93,6 +93,28 @@ export const feedbackAPI = {
   getByRoom: (roomId) => api.get(`/feedback/room/${roomId}`),
 };
 
+// Maintenance APIs (Maintenance Incharge, Approver, Admin)
+export const maintenanceAPI = {
+  // CRUD
+  create: (data) => api.post('/maintenance', data),
+  getAll: (params) => api.get('/maintenance', { params }),
+  getById: (id) => api.get(`/maintenance/${id}`),
+  getMyTasks: (params) => api.get('/maintenance/my-tasks', { params }),
+  getRoomHistory: (roomId) => api.get(`/maintenance/room/${roomId}`),
+
+  // Lifecycle (maintenance incharge)
+  accept: (id) => api.patch(`/maintenance/${id}/accept`),
+  updateStatus: (id, data) => api.patch(`/maintenance/${id}/status`, data),
+  submitReport: (id, data) => api.post(`/maintenance/${id}/report`, data),
+
+  // Approval (approver / admin)
+  approveCompletion: (id) => api.patch(`/maintenance/${id}/approve-completion`),
+  requestAdditionalWork: (id, data) => api.patch(`/maintenance/${id}/request-additional-work`, data),
+
+  // Analytics (admin)
+  getAnalytics: () => api.get('/maintenance/analytics'),
+};
+
 // Mock data for development fallback
 export const mockStats = {
   admin: { totalUsers: 45, activeUsers: 38, rooms: 12 },
