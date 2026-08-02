@@ -10,11 +10,25 @@ if (process.env.SENDGRID_API_KEY) {
 let smtpTransporter = null;
 const getSmtpTransporter = () => {
   if (smtpTransporter) return smtpTransporter;
-  // Port 587 + STARTTLS is the path that consistently works from Railway egress IPs.
-  // Port 465 sometimes times out depending on the Railway gateway, even though it's listed as supported.
+
+  // Pick which SMTP creds to use. Brevo is preferred when configured because
+  // its 300/day free tier is more generous than Gmail's limits from cloud IPs.
+  const useBrevo = !!(process.env.BREVO_USER && process.env.BREVO_PASS);
+  const host = useBrevo
+    ? (process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com')
+    : 'smtp.gmail.com';
+  const user = useBrevo
+    ? process.env.BREVO_USER
+    : process.env.EMAIL_USER;
+  const pass = useBrevo
+    ? process.env.BREVO_PASS
+    : process.env.EMAIL_PASS;
+  // Brevo defaults to 587 (STARTTLS). Gmail fallback defaults to 587 too —
+  // 465 sometimes times out from Railway egress IPs.
   const port = Number(process.env.EMAIL_PORT) || 587;
+
   smtpTransporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
+    host,
     port,
     secure: port === 465,       // 465 = implicit TLS, 587 = STARTTLS (both encrypted either way)
     requireTLS: port === 587,   // upgrade STARTTLS so we still get TLS on port 587
@@ -24,38 +38,35 @@ const getSmtpTransporter = () => {
     connectionTimeout: 20000,   // 20s — fail fast instead of hanging the cron for 5+ min
     greetingTimeout: 15000,
     socketTimeout: 30000,
-    tls: {
-      // Don't fail just because the cert chain looks unusual on some gateway IPs
-      rejectUnauthorized: true
-    },
+    tls: { rejectUnauthorized: true },
     auth: {
-      user: (process.env.EMAIL_USER || '').trim(),
-      pass: (process.env.EMAIL_PASS || '').trim()
+      user: (user || '').trim(),
+      pass: (pass || '').trim()
     }
   });
   return smtpTransporter;
 };
 
-// Send email using SendGrid API (preferred on Railway/cloud) or Gmail SMTP (fallback).
+// Send email using SendGrid API → Brevo SMTP → Gmail SMTP (in that order).
 const sendEmail = async (to, templateName, data) => {
   try {
-    // Skip if no email configured at all
     const hasSendGrid = !!process.env.SENDGRID_API_KEY;
-    const hasSmtp = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
-    if (!hasSendGrid && !hasSmtp) {
+    const hasBrevo = !!(process.env.BREVO_USER && process.env.BREVO_PASS);
+    const hasGmail = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+
+    if (!hasSendGrid && !hasBrevo && !hasGmail) {
       console.log(`📧 Email skipped (not configured): ${templateName} to ${to}`);
       return { success: false, reason: 'Email not configured' };
     }
 
     const template = emailTemplates[templateName](data);
+    const fromAddress = process.env.BREVO_USER || process.env.EMAIL_USER || 'noreply@roomify.com';
 
-    // Primary: SendGrid API over HTTPS. This is the only path that reliably
-    // works from Railway/cloud egress IPs — Gmail SMTP gets throttled or
-    // rejected at the IP level on cloud platforms.
+    // Priority 1: SendGrid API over HTTPS — most reliable from any platform.
     if (hasSendGrid) {
       const msg = {
         to,
-        from: process.env.EMAIL_USER || 'noreply@roomify.com',
+        from: fromAddress,
         subject: template.subject,
         html: template.html
       };
@@ -64,9 +75,21 @@ const sendEmail = async (to, templateName, data) => {
       return { success: true, messageId: resp.headers['x-message-id'] };
     }
 
-    // Fallback: Gmail SMTP via nodemailer (works on Render / local / dedicated IPs)
+    // Priority 2: Brevo SMTP — generous free tier (300/day), works from Railway IPs.
+    if (hasBrevo) {
+      const info = await getSmtpTransporter().sendMail({
+        from: `"Roomify System" <${fromAddress}>`,
+        to,
+        subject: template.subject,
+        html: template.html
+      });
+      console.log(`📧 Email sent via Brevo SMTP: ${templateName} to ${to} (id=${info.messageId})`);
+      return { success: true, messageId: info.messageId };
+    }
+
+    // Priority 3: Gmail SMTP — last resort (often unreliable from cloud IPs).
     const info = await getSmtpTransporter().sendMail({
-      from: `"Roomify System" <${process.env.EMAIL_USER}>`,
+      from: `"Roomify System" <${fromAddress}>`,
       to,
       subject: template.subject,
       html: template.html
@@ -75,9 +98,8 @@ const sendEmail = async (to, templateName, data) => {
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error(`📧 Email failed [${error.code || 'unknown'}]: ${templateName} to ${to} — ${error.message}`);
-    // If SendGrid failed, log the response body so we can see *why* it rejected us.
     if (error.response && error.response.body) {
-      console.error('📧 SendGrid response:', JSON.stringify(error.response.body));
+      console.error('📧 Provider response:', JSON.stringify(error.response.body));
     }
     return { success: false, error: error.message };
   }
