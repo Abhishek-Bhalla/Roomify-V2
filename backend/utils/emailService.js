@@ -6,23 +6,19 @@ if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
-// Lazy-initialized Gmail SMTP transporter (kept alive across sends on the same Railway instance).
+// Lazy-initialized SMTP transporter (kept alive across sends on the same Railway instance).
+// Used for both Brevo and Gmail — pick based on which env vars are set.
 let smtpTransporter = null;
 const getSmtpTransporter = () => {
   if (smtpTransporter) return smtpTransporter;
 
-  // Pick which SMTP creds to use. Brevo is preferred when configured because
-  // its 300/day free tier is more generous than Gmail's limits from cloud IPs.
-  const useBrevo = !!(process.env.BREVO_USER && process.env.BREVO_PASS);
-  const host = useBrevo
+  const hasBrevo = !!(process.env.BREVO_USER && process.env.BREVO_PASS);
+  // host + auth.user/pass: where we AUTH to send. Different from the From address.
+  const host = hasBrevo
     ? (process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com')
     : 'smtp.gmail.com';
-  const user = useBrevo
-    ? process.env.BREVO_USER
-    : process.env.EMAIL_USER;
-  const pass = useBrevo
-    ? process.env.BREVO_PASS
-    : process.env.EMAIL_PASS;
+  const user = hasBrevo ? process.env.BREVO_USER : process.env.EMAIL_USER;
+  const pass = hasBrevo ? process.env.BREVO_PASS : process.env.EMAIL_PASS;
   // Brevo defaults to 587 (STARTTLS). Gmail fallback defaults to 587 too —
   // 465 sometimes times out from Railway egress IPs.
   const port = Number(process.env.EMAIL_PORT) || 587;
@@ -30,12 +26,12 @@ const getSmtpTransporter = () => {
   smtpTransporter = nodemailer.createTransport({
     host,
     port,
-    secure: port === 465,       // 465 = implicit TLS, 587 = STARTTLS (both encrypted either way)
-    requireTLS: port === 587,   // upgrade STARTTLS so we still get TLS on port 587
-    pool: true,                 // reuse connections so cron-triggered sends are fast
+    secure: port === 465,
+    requireTLS: port === 587,
+    pool: true,
     maxConnections: 3,
-    family: 4,                  // Railway's NAT has no IPv6 outbound — force IPv4 to Google's SMTP
-    connectionTimeout: 20000,   // 20s — fail fast instead of hanging the cron for 5+ min
+    family: 4,                  // Railway's NAT has no IPv6 outbound — force IPv4
+    connectionTimeout: 20000,
     greetingTimeout: 15000,
     socketTimeout: 30000,
     tls: { rejectUnauthorized: true },
@@ -45,6 +41,15 @@ const getSmtpTransporter = () => {
     }
   });
   return smtpTransporter;
+};
+
+// Resolve the visible "From" address: explicit override > Brevo/Gmail user > fallback.
+const getFromAddress = () => {
+  // Optional override — lets you send "from" any Gmail while authenticating with Brevo.
+  // Example: BREVO_FROM=roomifyapprover@gmail.com while BREVO_USER=8xxx@smtp-brevo.com
+  if (process.env.BREVO_FROM) return process.env.BREVO_FROM.trim();
+  if (process.env.EMAIL_FROM) return process.env.EMAIL_FROM.trim();
+  return (process.env.BREVO_USER || process.env.EMAIL_USER || 'noreply@roomify.com').trim();
 };
 
 // Send email using SendGrid API → Brevo SMTP → Gmail SMTP (in that order).
@@ -60,7 +65,9 @@ const sendEmail = async (to, templateName, data) => {
   }
 
   const template = emailTemplates[templateName](data);
-  const fromAddress = process.env.BREVO_USER || process.env.EMAIL_USER || 'noreply@roomify.com';
+  const fromAddress = getFromAddress();
+  const displayName = process.env.EMAIL_FROM_NAME || 'Roomify System';
+  const fromHeader = `"${displayName}" <${fromAddress}>`;
 
   // Priority 1: SendGrid API over HTTPS — most reliable when it works.
   if (hasSendGrid) {
@@ -75,8 +82,6 @@ const sendEmail = async (to, templateName, data) => {
       console.log(`📧 Email sent via SendGrid: ${templateName} to ${to} (status=${resp.statusCode})`);
       return { success: true, messageId: resp.headers['x-message-id'] };
     } catch (error) {
-      // 401 (bad key), 403 (unverified sender / blocked), 429 (rate limit):
-      // try the next provider instead of failing the whole email.
       const status = error.code || error.response?.statusCode;
       const isFallbackable = [401, 403, 429].includes(status) ||
         (error.response && error.response.body &&
@@ -85,7 +90,6 @@ const sendEmail = async (to, templateName, data) => {
       if (!isFallbackable) {
         return { success: false, error: error.message };
       }
-      // fall through
     }
   }
 
@@ -93,28 +97,27 @@ const sendEmail = async (to, templateName, data) => {
   if (hasBrevo) {
     try {
       const info = await getSmtpTransporter().sendMail({
-        from: `"Roomify System" <${fromAddress}>`,
+        from: fromHeader,
         to,
         subject: template.subject,
         html: template.html
       });
-      console.log(`📧 Email sent via Brevo SMTP: ${templateName} to ${to} (id=${info.messageId})`);
+      console.log(`📧 Email sent via Brevo SMTP: ${templateName} to ${to} from=${fromAddress} (id=${info.messageId})`);
       return { success: true, messageId: info.messageId };
     } catch (error) {
       console.error(`📧 Brevo SMTP failed: ${error.message} — trying Gmail`);
-      // fall through to Gmail
     }
   }
 
   // Priority 3: Gmail SMTP — last resort (often unreliable from cloud IPs).
   if (hasGmail) {
     const info = await getSmtpTransporter().sendMail({
-      from: `"Roomify System" <${fromAddress}>`,
+      from: fromHeader,
       to,
       subject: template.subject,
       html: template.html
     });
-    console.log(`📧 Email sent via Gmail SMTP: ${templateName} to ${to} (id=${info.messageId})`);
+    console.log(`📧 Email sent via Gmail SMTP: ${templateName} to ${to} from=${fromAddress} (id=${info.messageId})`);
     return { success: true, messageId: info.messageId };
   }
 
