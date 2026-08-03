@@ -96,8 +96,8 @@ const BookingRequests = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border p-4" style={{ borderColor: '#E5E7EB' }}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="bg-white rounded-xl border p-4 lg:p-6" style={{ borderColor: '#E5E7EB' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
             <input

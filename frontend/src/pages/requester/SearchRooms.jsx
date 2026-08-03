@@ -141,7 +141,7 @@ const SearchRooms = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
         {/* Filters Panel - Desktop */}
-        <div className="hidden lg:block col-span-1">
+        <div className="hidden lg:block lg:col-span-2">
           <div className="bg-white rounded-xl border p-5 sticky top-20" style={{ borderColor: '#E5E7EB' }}>
             <div className="flex items-center gap-2 mb-4">
               <Filter size={18} className="text-gray-500" />
@@ -303,7 +303,7 @@ const SearchRooms = () => {
         )}
 
         {/* Room Cards Grid */}
-        <div className={`col-span-1 ${showFilters ? 'lg:col-span-3' : 'lg:col-span-4'} grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5`}>
+        <div className={`col-span-1 ${showFilters ? 'lg:col-span-4' : 'lg:col-span-6'} grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5`}>
           {isLoading ? (
             <p className="col-span-full text-center text-gray-500 py-12">Loading rooms...</p>
           ) : filteredRooms.length === 0 ? (
