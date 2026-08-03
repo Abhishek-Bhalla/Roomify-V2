@@ -6,7 +6,6 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import PasswordInput from '../../components/common/PasswordInput';
 import RLogo from '../../assets/R.png';
-import { authAPI } from '../../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -15,8 +14,6 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
-  const [registerData, setRegisterData] = useState({ name: '', email: '', password: '' });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,25 +25,6 @@ const Login = () => {
       navigate(`/${user.role}`, { replace: true });
     } catch (err) {
       setError(err.message || String(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      await authAPI.register({ ...registerData, role: 'requester' });
-      setShowRegister(false);
-      setEmail(registerData.email);
-      setPassword(registerData.password);
-      setError('Registration successful! Please sign in.');
-      setRegisterData({ name: '', email: '', password: '' });
-    } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -74,101 +52,42 @@ const Login = () => {
             <p className="text-gray-500 text-sm mt-1">Room & Lab Booking System</p>
           </div>
 
-          {showRegister ? (
-            <form onSubmit={handleRegister} className="space-y-4 sm:space-y-5">
-              <Input
-                label="Full Name"
-                type="text"
-                value={registerData.name}
-                onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                placeholder="Enter your name"
-                required
-              />
-              <Input
-                label="Email"
-                type="email"
-                value={registerData.email}
-                onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                placeholder="Enter your email"
-                required
-              />
-              <PasswordInput
-                label="Password"
-                value={registerData.password}
-                onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                placeholder="Create a password"
-                required
-              />
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+            <Input
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+            />
 
-              {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                  {error}
-                </div>
-              )}
+            <PasswordInput
+              label="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+            />
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Creating Account...' : 'Create Account'}
-              </Button>
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                {error}
+              </div>
+            )}
 
-              <button
-                type="button"
-                onClick={() => { setShowRegister(false); setError(''); }}
-                className="w-full text-sm text-gray-600 hover:text-gray-800"
-              >
-                Already have an account? Sign In
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-              <Input
-                label="Email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-              />
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </Button>
+          </form>
 
-              <PasswordInput
-                label="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-              />
-
-              {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                  {error}
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading}
-              >
-                {loading ? 'Signing in...' : 'Sign In'}
-              </Button>
-
-              <button
-                type="button"
-                onClick={() => setShowRegister(true)}
-                className="w-full text-sm text-gray-600 hover:text-gray-800"
-              >
-                Don't have an account? Register
-              </button>
-            </form>
-          )}
-
-          <div className="mt-6 sm:mt-8 p-3 sm:p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-500 mb-2 font-semibold"></p>
-            <div className="text-xs text-gray-600 space-y-1">
-              {/* <p><strong>Admin:</strong> admin@roomify.com / admin123</p>
-              <p><strong>Approver:</strong> approver@roomify.com / approver123</p>
-              <p><strong>Requester:</strong> requester@roomify.com / requester123</p> */}
-            </div>
-          </div>
+          <p className="text-xs text-gray-500 text-center mt-4">
+            Need an account? Contact your administrator.
+          </p>
         </Card>
       </div>
     </div>

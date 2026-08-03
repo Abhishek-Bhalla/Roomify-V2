@@ -1,0 +1,411 @@
+You are working on the Roomify room booking management system.
+
+The application currently has three actors:
+1. Requester
+2. Approver
+3. Admin
+
+I want to introduce a fourth actor:
+
+## New Actor
+Maintenance Incharge
+
+This actor is responsible for handling room maintenance requests, updating maintenance progress, and marking rooms as ready for booking after repairs or renovations.
+
+Do NOT replace any existing functionality. Extend the current application while following the existing architecture, coding standards, and UI design.
+
+## Functional Requirements
+
+### 1. New Role
+Add a new role called "Maintenance Incharge".
+
+Permissions:
+- Login
+- Logout
+- View assigned maintenance tasks
+- View room details
+- Accept maintenance tasks
+- Update maintenance progress
+- Change maintenance status
+- Upload maintenance report
+- Upload before/after images
+- Add remarks
+- Mark maintenance as completed
+- View maintenance history
+
+This role CANNOT:
+- Approve bookings
+- Reject bookings
+- Create bookings
+- Edit rooms
+- Delete rooms
+- Manage users
+- Access reports (except maintenance-related reports)
+
+---
+
+## 2. Room Status Lifecycle
+
+Extend the room status to include:
+
+- Available
+- Booked
+- Pending Approval
+- Under Maintenance
+- Maintenance Assigned
+- Maintenance In Progress
+- Maintenance Review Pending
+- Available
+
+Whenever a room enters maintenance, it must no longer appear in room search results or be available for booking.
+
+---
+
+## 3. Approver Workflow
+
+On the booking details page (or room management page), add a new action:
+
+"Mark Room Under Maintenance"
+
+When clicked:
+
+- Ask for maintenance reason
+- Select issue category
+- Select priority
+- Add optional remarks
+
+Issue Categories:
+- Electrical
+- HVAC / AC
+- Furniture
+- Cleaning
+- Renovation
+- Plumbing
+- Internet
+- Projector
+- Other
+
+Priority:
+- Critical
+- High
+- Medium
+- Low
+
+After submission:
+
+- Room status becomes "Under Maintenance"
+- Create a Maintenance record
+- Assign the task to the Maintenance Incharge
+- Send an email notification immediately
+- Send an in-app notification
+- Prevent new bookings for that room
+
+---
+
+## 4. Maintenance Dashboard
+
+Create a dedicated dashboard for the Maintenance Incharge.
+
+Dashboard sections:
+
+- Assigned Tasks
+- In Progress
+- Pending Review
+- Completed
+- Maintenance History
+
+Each task card should display:
+
+- Room Name
+- Room Number
+- Issue
+- Priority
+- Assigned Date
+- Reported By
+- Current Status
+
+---
+
+## 5. Maintenance Task Details
+
+Each task should allow:
+
+Accept Task
+
+Update Status:
+- Assigned
+- In Progress
+- Waiting for Parts
+- Completed
+
+Update Progress Notes
+
+Upload:
+- Before Images
+- After Images
+- Supporting Documents (optional)
+
+Add:
+- Engineer Name
+- Work Performed
+- Completion Date
+- Cost (optional)
+- Remarks
+
+Submit Final Report
+
+---
+
+## 6. Completion Workflow
+
+After the Maintenance Incharge submits the report:
+
+Status changes to:
+
+Maintenance Review Pending
+
+Automatically notify:
+
+- Approver
+- Admin
+
+Approver can:
+
+Approve Completion
+
+or
+
+Request Additional Work
+
+If approved:
+
+Room status becomes Available.
+
+The room immediately appears again in search results and can be booked.
+
+If rejected:
+
+Status returns to:
+
+Maintenance In Progress
+
+Maintenance Incharge receives a notification with the comments.
+
+---
+
+## 7. Email Notifications
+
+Automatically send emails when:
+
+Maintenance Assigned
+→ Maintenance Incharge
+
+Maintenance Started
+→ Approver + Admin
+
+Maintenance Completed
+→ Approver
+
+Maintenance Approved
+→ Maintenance Incharge + Admin
+
+Room Available Again
+→ Admin
+
+Use existing email infrastructure.
+
+---
+
+## 8. Database Changes
+
+Create a Maintenance collection/table.
+
+Suggested fields:
+
+maintenanceId
+
+roomId
+
+assignedTo
+
+reportedBy
+
+issueCategory
+
+priority
+
+description
+
+status
+
+startedAt
+
+expectedCompletion
+
+completedAt
+
+approvedAt
+
+report
+
+attachments
+
+beforeImages
+
+afterImages
+
+cost
+
+remarks
+
+createdAt
+
+updatedAt
+
+---
+
+Update Room model:
+
+status
+
+maintenanceStatus
+
+lastMaintenanceDate
+
+maintenanceHistory
+
+---
+
+## 9. Notifications
+
+Generate in-app notifications for:
+
+New Assignment
+
+Maintenance Started
+
+Maintenance Completed
+
+Completion Approved
+
+Additional Work Requested
+
+---
+
+## 10. Admin Features
+
+Admin should be able to:
+
+View all maintenance tasks
+
+Filter by:
+- Status
+- Priority
+- Date
+- Assigned Engineer
+
+View maintenance reports
+
+View maintenance history for every room
+
+See maintenance analytics:
+
+- Total maintenance requests
+- Active maintenance
+- Average repair time
+- Most problematic rooms
+- Monthly maintenance costs
+- Downtime per room
+
+---
+
+## 11. Room Details Page
+
+Add a Maintenance section showing:
+
+Current Status
+
+Last Maintenance Date
+
+Maintenance History
+
+Previous Issues
+
+Completion Reports
+
+Images
+
+---
+
+## 12. Booking Logic
+
+When searching rooms:
+
+Hide any room whose status is:
+
+- Under Maintenance
+- Maintenance Assigned
+- Maintenance In Progress
+- Maintenance Review Pending
+
+Display only rooms that are Available.
+
+---
+
+## 13. Audit Logs
+
+Every maintenance action should be logged.
+
+Example:
+
+Approver marked Room A101 under maintenance.
+
+Maintenance Incharge accepted the task.
+
+Maintenance started.
+
+Report uploaded.
+
+Approver approved completion.
+
+Room became available.
+
+---
+
+## 14. UI Requirements
+
+Maintain the current design language.
+
+Create responsive pages for:
+
+- Maintenance Dashboard
+- Maintenance Details
+- Maintenance Report
+- Maintenance History
+
+Use badges for status and priority.
+
+Provide filters, search, sorting, pagination, and responsive layouts.
+
+---
+
+## 15. Deliverables
+
+Update:
+
+- Backend models
+- APIs
+- Controllers
+- Routes
+- Services
+- Role permissions
+- Database schema
+- Email service
+- Notification service
+- Frontend pages
+- Sidebar navigation
+- Dashboard widgets
+- Room management pages
+- Booking logic
+
+Ensure the new Maintenance module integrates seamlessly with the existing Requester, Approver, and Admin workflows without breaking any current functionality.
