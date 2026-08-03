@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'blocked'],
     default: 'active'
+  },
+  profilePicture: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true

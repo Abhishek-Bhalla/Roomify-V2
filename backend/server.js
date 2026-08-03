@@ -1,10 +1,18 @@
 /* eslint-disable no-undef */
 
 const dotenv = require('dotenv');
+const fs = require('fs');
+const path = require('path');
 const connectDB = require('./config/db.js');
 const app = require('./app.js');
 const { startNotificationScheduler } = require('./scheduler/notifications');
 dotenv.config();
+
+// Ensure the uploads directory exists at boot so the first upload request
+// (and the express.static mount above) never fail with ENOENT. On Railway the
+// container filesystem is ephemeral, but mkdirSync is cheap and idempotent.
+fs.mkdirSync(path.join(process.cwd(), 'uploads', 'avatars'), { recursive: true });
+
 connectDB().then(async () => {
   const Booking = require('./models/Booking');
   const Maintenance = require('./models/Maintenance');

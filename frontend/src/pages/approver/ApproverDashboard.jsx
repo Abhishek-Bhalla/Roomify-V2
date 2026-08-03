@@ -3,6 +3,7 @@ import { Clock, CheckCircle, XCircle, RefreshCw, DoorOpen, FileText } from 'luci
 import StatCard from '../../components/common/StatCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import Button from '../../components/common/Button';
+import Avatar from '../../components/common/Avatar';
 import { bookingAPI, roomAPI } from '../../services/api';
 
 const ApproverDashboard = () => {
@@ -103,12 +104,7 @@ const ApproverDashboard = () => {
                 style={{ background: '#FFFBEB' }}
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0"
-                    style={{ background: '#2563EB' }}
-                  >
-                    {booking.userId?.name?.charAt(0) || 'U'}
-                  </div>
+                  <Avatar user={booking.userId} size={40} />
                   <div className="min-w-0">
                     <p className="font-medium text-gray-800">{booking.userId?.name || 'Unknown'}</p>
                     <p className="text-sm text-gray-500 truncate">

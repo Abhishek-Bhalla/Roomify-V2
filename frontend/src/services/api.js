@@ -2,6 +2,17 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
+// Server origin used to build absolute URLs for static assets (e.g. uploaded
+// avatars). VITE_API_URL typically looks like "https://api.example.com/api" --
+// strip the trailing "/api" so we can prepend "/uploads/..." cleanly.
+const SERVER_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
+
+export const resolveAssetUrl = (path) => {
+  if (!path) return '';
+  if (/^https?:\/\//i.test(path)) return path;
+  return SERVER_ORIGIN + (path.startsWith('/') ? '' : '/') + path;
+};
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -43,21 +54,27 @@ export const authAPI = {
 export const userAPI = {
   getAll: () => api.get('/users'),
   create: (data) => api.post('/users', data),
-  update: (id, data) => api.put(`/users/${id}`, data),
-  delete: (id) => api.delete(`/users/${id}`),
-  block: (id) => api.patch(`/users/${id}/block`),
-  unblock: (id) => api.patch(`/users/${id}/unblock`),
+  update: (id, data) => api.put('/users/' + id, data),
+  delete: (id) => api.delete('/users/' + id),
+  block: (id) => api.patch('/users/' + id + '/block'),
+  unblock: (id) => api.patch('/users/' + id + '/unblock'),
+  // Profile picture: mounted under /api/profile (own user or admin).
+  uploadAvatar: (id, formData) =>
+    api.post('/profile/' + id + '/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  removeAvatar: (id) => api.delete('/profile/' + id + '/avatar'),
 };
 
 // Room APIs (Admin only)
 export const roomAPI = {
   getAll: (params) => api.get('/rooms', { params }),
   create: (data) => api.post('/rooms', data),
-  update: (id, data) => api.put(`/rooms/${id}`, data),
-  delete: (id) => api.delete(`/rooms/${id}`),
-  toggleStatus: (id, status) => api.patch(`/rooms/${id}/status`, { status }),
-  getAffectedBookings: (id) => api.get(`/rooms/${id}/affected-bookings`),
-  relocateBookings: (id, targetRoomId, bookingIds) => api.post(`/rooms/${id}/relocate`, { targetRoomId, bookingIds }),
+  update: (id, data) => api.put('/rooms/' + id, data),
+  delete: (id) => api.delete('/rooms/' + id),
+  toggleStatus: (id, status) => api.patch('/rooms/' + id + '/status', { status }),
+  getAffectedBookings: (id) => api.get('/rooms/' + id + '/affected-bookings'),
+  relocateBookings: (id, targetRoomId, bookingIds) => api.post('/rooms/' + id + '/relocate', { targetRoomId, bookingIds }),
 };
 
 // Booking APIs
@@ -65,8 +82,8 @@ export const bookingAPI = {
   create: (data) => api.post('/bookings', data),
   getMy: (status) => api.get('/bookings/my', { params: { status } }),
   getPending: () => api.get('/bookings/pending'),
-  approve: (id) => api.patch(`/bookings/${id}/approve`),
-  reject: (id, remarks) => api.patch(`/bookings/${id}/reject`, { remarks }),
+  approve: (id) => api.patch('/bookings/' + id + '/approve'),
+  reject: (id, remarks) => api.patch('/bookings/' + id + '/reject', { remarks }),
   getAll: (params) => api.get('/bookings/all', { params }),
 };
 
@@ -74,7 +91,7 @@ export const bookingAPI = {
 export const notificationAPI = {
   getAll: () => api.get('/notifications'),
   getUnreadCount: () => api.get('/notifications/unread-count'),
-  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAsRead: (id) => api.patch('/notifications/' + id + '/read'),
   markAllAsRead: () => api.patch('/notifications/read-all'),
 };
 
@@ -90,7 +107,7 @@ export const feedbackAPI = {
   getStats: () => api.get('/feedback/stats'),
   submit: (data) => api.post('/feedback', data),
   getCompletedBookings: () => api.get('/feedback/completed-bookings'),
-  getByRoom: (roomId) => api.get(`/feedback/room/${roomId}`),
+  getByRoom: (roomId) => api.get('/feedback/room/' + roomId),
 };
 
 // Maintenance APIs (Maintenance Incharge, Approver, Admin)
@@ -98,18 +115,18 @@ export const maintenanceAPI = {
   // CRUD
   create: (data) => api.post('/maintenance', data),
   getAll: (params) => api.get('/maintenance', { params }),
-  getById: (id) => api.get(`/maintenance/${id}`),
+  getById: (id) => api.get('/maintenance/' + id),
   getMyTasks: (params) => api.get('/maintenance/my-tasks', { params }),
-  getRoomHistory: (roomId) => api.get(`/maintenance/room/${roomId}`),
+  getRoomHistory: (roomId) => api.get('/maintenance/room/' + roomId),
 
   // Lifecycle (maintenance incharge)
-  accept: (id) => api.patch(`/maintenance/${id}/accept`),
-  updateStatus: (id, data) => api.patch(`/maintenance/${id}/status`, data),
-  submitReport: (id, data) => api.post(`/maintenance/${id}/report`, data),
+  accept: (id) => api.patch('/maintenance/' + id + '/accept'),
+  updateStatus: (id, data) => api.patch('/maintenance/' + id + '/status', data),
+  submitReport: (id, data) => api.post('/maintenance/' + id + '/report', data),
 
   // Approval (approver / admin)
-  approveCompletion: (id) => api.patch(`/maintenance/${id}/approve-completion`),
-  requestAdditionalWork: (id, data) => api.patch(`/maintenance/${id}/request-additional-work`, data),
+  approveCompletion: (id) => api.patch('/maintenance/' + id + '/approve-completion'),
+  requestAdditionalWork: (id, data) => api.patch('/maintenance/' + id + '/request-additional-work', data),
 
   // Analytics (admin)
   getAnalytics: () => api.get('/maintenance/analytics'),

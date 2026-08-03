@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import Avatar from '../common/Avatar';
 import NotificationBell from '../common/NotificationBell';
 import { Menu, X } from 'lucide-react';
 
@@ -9,6 +11,7 @@ const Navbar = ({ onMenuClick }) => {
     admin: 'Administrator',
     approver: 'Approver',
     requester: 'Requester',
+    maintenance: 'Maintenance Incharge',
   };
 
   return (
@@ -35,18 +38,17 @@ const Navbar = ({ onMenuClick }) => {
         {/* Right Section */}
         <div className="flex items-center gap-2 md:gap-3 ml-auto">
           <NotificationBell />
-          <div className="flex items-center gap-2 pl-2 md:pl-3 border-l border-gray-200">
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
-              style={{ background: '#2563EB' }}
-            >
-              {user?.name?.charAt(0) || 'U'}
-            </div>
+          <Link
+            to="/profile"
+            className="flex items-center gap-2 pl-2 md:pl-3 border-l border-gray-200 hover:opacity-80"
+            title="Open my profile"
+          >
+            <Avatar user={user} size={32} />
             <div className="hidden sm:block">
               <p className="text-sm font-medium text-gray-800">{user?.name}</p>
               <p className="text-xs text-gray-500">{roleLabels[user?.role]}</p>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </header>

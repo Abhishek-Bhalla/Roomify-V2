@@ -16,6 +16,7 @@ import {
   Wrench,
   History,
   BarChart3,
+  User as UserIcon,
 } from 'lucide-react';
 import RLogo from '../../assets/R.png';
 
@@ -33,6 +34,7 @@ const Sidebar = ({ onClose }) => {
       { to: '/admin/maintenance', icon: Wrench, label: 'Maintenance' },
       { to: '/admin/maintenance/analytics', icon: BarChart3, label: 'Maintenance Stats' },
       { to: '/admin/schedule', icon: Calendar, label: 'Schedule' },
+      { to: '/profile', icon: UserIcon, label: 'Profile' },
     ],
     approver: [
       { to: '/approver', icon: LayoutDashboard, label: 'Dashboard' },
@@ -40,11 +42,13 @@ const Sidebar = ({ onClose }) => {
       { to: '/approver/requests', icon: ClipboardCheck, label: 'Booking Requests' },
       { to: '/approver/schedule', icon: Calendar, label: 'Schedule' },
       { to: '/approver/feedback', icon: Star, label: 'Feedback' },
+      { to: '/profile', icon: UserIcon, label: 'Profile' },
     ],
     maintenance: [
       { to: '/maintenance', icon: LayoutDashboard, label: 'Dashboard' },
       { to: '/maintenance/tasks', icon: Wrench, label: 'My Tasks' },
       { to: '/maintenance/history', icon: History, label: 'History' },
+      { to: '/profile', icon: UserIcon, label: 'Profile' },
     ],
     requester: [
       { to: '/requester', icon: LayoutDashboard, label: 'Dashboard' },
@@ -52,6 +56,7 @@ const Sidebar = ({ onClose }) => {
       { to: '/requester/bookings', icon: BookOpen, label: 'My Bookings' },
       { to: '/requester/schedule', icon: Calendar, label: 'My Schedule' },
       { to: '/requester/feedback', icon: Star, label: 'Feedback' },
+      { to: '/profile', icon: UserIcon, label: 'Profile' },
     ],
   };
 

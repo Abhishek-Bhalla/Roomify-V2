@@ -45,7 +45,8 @@ const login = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        status: user.status
+        status: user.status,
+        profilePicture: user.profilePicture || null
       }
     }, 'Login successful');
   } catch (error) {
@@ -87,7 +88,8 @@ const register = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        status: user.status
+        status: user.status,
+        profilePicture: user.profilePicture || null
       }
     }, 'Registration successful', 201);
   } catch (error) {

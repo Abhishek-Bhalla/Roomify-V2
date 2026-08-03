@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
 import Button from '../../components/common/Button';
+import Avatar from '../../components/common/Avatar';
 import { maintenanceAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -236,7 +237,7 @@ const MaintenanceTaskDetails = () => {
               <div className="space-y-3">
                 {task.auditLog.slice().reverse().map((entry, i) => (
                   <div key={i} className="flex items-start gap-3 text-sm">
-                    <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ background: '#2563EB' }} />
+                    <Avatar user={entry.byUser} size={32} />
                     <div className="min-w-0">
                       <p className="font-medium text-gray-800">
                         {entry.action}

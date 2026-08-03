@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Plus, Edit2, Trash2, Ban, CheckCircle, X, UserPlus } from 'lucide-react';
+import { RefreshCw, Plus, Edit2, Trash2, Ban, CheckCircle, X, UserPlus, Camera } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
 import Button from '../../components/common/Button';
 import PasswordInput from '../../components/common/PasswordInput';
+import Avatar from '../../components/common/Avatar';
+import AdminEditAvatarModal from '../common/AdminEditAvatarModal';
 import { userAPI } from '../../services/api';
 
 const ManageUsers = () => {
@@ -10,6 +12,7 @@ const ManageUsers = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [avatarTarget, setAvatarTarget] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', role: 'requester', password: '', employeeId: '' });
 
   const fetchUsers = async () => {
@@ -91,6 +94,11 @@ const ManageUsers = () => {
     }
   };
 
+  const handleAvatarUpdated = (updated) => {
+    setUsers((prev) => prev.map((u) => (u._id === updated._id ? { ...u, ...updated } : u)));
+    setAvatarTarget((prev) => (prev && prev._id === updated._id ? { ...prev, ...updated } : prev));
+  };
+
   const getRoleBadgeColor = (role) => {
     switch (role) {
       case 'admin':
@@ -155,12 +163,7 @@ const ManageUsers = () => {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0"
-                          style={{ background: '#034DA2' }}
-                        >
-                          {user.name.charAt(0)}
-                        </div>
+                        <Avatar user={user} size={40} />
                         <span className="font-medium text-gray-800">{user.name}</span>
                       </div>
                     </td>
@@ -178,6 +181,13 @@ const ManageUsers = () => {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setAvatarTarget(user)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-purple-50 text-purple-600 transition-colors"
+                          title="Edit avatar"
+                        >
+                          <Camera size={16} />
+                        </button>
                         <button
                           onClick={() => handleEdit(user)}
                           className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
@@ -217,12 +227,7 @@ const ManageUsers = () => {
             <div key={user._id} className="bg-white rounded-xl border p-4" style={{ borderColor: '#E5E7EB' }}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0"
-                    style={{ background: '#034DA2' }}
-                  >
-                    {user.name.charAt(0)}
-                  </div>
+                  <Avatar user={user} size={40} />
                   <div>
                     <p className="font-medium text-gray-800">{user.name}</p>
                     <p className="text-sm text-gray-500">{user.email}</p>
@@ -241,6 +246,13 @@ const ManageUsers = () => {
                   {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                 </span>
                 <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setAvatarTarget(user)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-purple-50 text-purple-600 transition-colors"
+                    title="Edit avatar"
+                  >
+                    <Camera size={16} />
+                  </button>
                   <button
                     onClick={() => handleEdit(user)}
                     className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
@@ -344,6 +356,14 @@ const ManageUsers = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {avatarTarget && (
+        <AdminEditAvatarModal
+          user={avatarTarget}
+          onClose={() => setAvatarTarget(null)}
+          onUpdated={handleAvatarUpdated}
+        />
       )}
     </div>
   );

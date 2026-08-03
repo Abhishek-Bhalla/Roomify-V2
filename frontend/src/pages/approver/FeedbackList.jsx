@@ -3,6 +3,7 @@ import { Star, MessageSquare, Calendar, MapPin, User, RefreshCw, Filter } from '
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import StatusBadge from '../../components/common/StatusBadge';
+import Avatar from '../../components/common/Avatar';
 import { feedbackAPI } from '../../services/api';
 
 const FeedbackList = () => {
@@ -138,9 +139,7 @@ const FeedbackList = () => {
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium flex-shrink-0">
-                      {feedback.userId?.name?.charAt(0) || 'U'}
-                    </div>
+                    <Avatar user={feedback.userId} size={40} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium text-gray-800">{feedback.userId?.name || 'Unknown User'}</p>

@@ -31,6 +31,8 @@ import MaintenanceTasks from './pages/maintenance/MaintenanceTasks';
 import MaintenanceTaskDetails from './pages/maintenance/MaintenanceTaskDetails';
 import MaintenanceHistory from './pages/maintenance/MaintenanceHistory';
 
+import Profile from './pages/common/Profile';
+
 function App() {
   return (
     <AuthProvider>
@@ -102,6 +104,18 @@ function App() {
             <Route path="tasks" element={<MaintenanceTasks />} />
             <Route path="tasks/:id" element={<MaintenanceTaskDetails />} />
             <Route path="history" element={<MaintenanceHistory />} />
+          </Route>
+
+          {/* Profile — accessible to any authenticated user */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'approver', 'requester', 'maintenance']}>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Profile />} />
           </Route>
 
           <Route path="/" element={<Navigate to="/login" replace />} />
