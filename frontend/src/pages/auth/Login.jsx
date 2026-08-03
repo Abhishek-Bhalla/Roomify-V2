@@ -47,7 +47,7 @@ const Login = () => {
         style={
           backgroundImage
             ? {
-                // backgroundImage: `linear-gradient(rgba(15,23,42,0.55), rgba(15,23,42,0.65)), radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.35) 100%), url(${backgroundImage})`,
+                backgroundImage: `linear-gradient(rgba(15,23,42,0.55), rgba(15,23,42,0.65)), radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.35) 100%), url(${backgroundImage})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
