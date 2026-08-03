@@ -139,11 +139,14 @@ const SearchRooms = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
-        {/* Filters Panel - Desktop */}
-        <div className="hidden lg:block lg:col-span-2">
-          <div className="bg-white rounded-xl border p-5 sticky top-20" style={{ borderColor: '#E5E7EB' }}>
-            <div className="flex items-center gap-2 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Filters Panel - Desktop (left) */}
+        <aside className="hidden lg:block lg:col-span-1">
+          <div
+            className="bg-white rounded-xl border p-5 lg:p-6 sticky top-20 shadow-sm"
+            style={{ borderColor: '#E5E7EB' }}
+          >
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#F3F4F6' }}>
               <Filter size={18} className="text-gray-500" />
               <h2 className="font-semibold text-gray-800">Filters</h2>
             </div>
@@ -218,7 +221,7 @@ const SearchRooms = () => {
               </button>
             </div>
           </div>
-        </div>
+        </aside>
 
         {/* Filters Panel - Mobile */}
         {showFilters && (
@@ -302,8 +305,8 @@ const SearchRooms = () => {
           </div>
         )}
 
-        {/* Room Cards Grid */}
-        <div className={`col-span-1 ${showFilters ? 'lg:col-span-4' : 'lg:col-span-6'} grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5`}>
+        {/* Room Cards Grid - right */}
+        <section className={`col-span-1 ${showFilters ? 'lg:col-span-2' : 'lg:col-span-2'} grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5`}>
           {isLoading ? (
             <p className="col-span-full text-center text-gray-500 py-12">Loading rooms...</p>
           ) : filteredRooms.length === 0 ? (
@@ -366,7 +369,7 @@ const SearchRooms = () => {
               </div>
             ))
           )}
-        </div>
+        </section>
       </div>
 
       {/* Request Booking Modal */}
