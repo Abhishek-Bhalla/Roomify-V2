@@ -76,7 +76,7 @@ const Sidebar = ({ onClose }) => {
       <div className="p-5 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src={RLogo} alt="Logo" className="w-10 h-10 rounded-lg object-contain" />
-          <h1 className="text-lg font-bold text-gray-800 whitespace-nowrap">Roomify</h1>
+          <h1 className="text-lg font-bold text-gray-800 whitespace-nowrap">CampusSpace</h1>
         </div>
         <button
           onClick={onClose}

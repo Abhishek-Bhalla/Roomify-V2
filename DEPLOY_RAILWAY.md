@@ -32,7 +32,7 @@ Google throttles/shared-cloud IPs.
 ### Option B: Gmail SMTP (often unreliable from cloud platforms)
 
 1. Enable 2-Step Verification on the Gmail account.
-2. https://myaccount.google.com/apppasswords → create one labelled `Roomify`.
+2. https://myaccount.google.com/apppasswords → create one labelled `CampusSpace`.
 3. On Railway: set `EMAIL_USER`, `EMAIL_PASS` (16-char App Password).
    Optionally `EMAIL_PORT=587` (default; `465` sometimes times out from Railway).
 

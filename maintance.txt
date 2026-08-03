@@ -1,4 +1,4 @@
-You are working on the Roomify room booking management system.
+You are working on the CampusSpace room booking management system.
 
 The application currently has three actors:
 1. Requester

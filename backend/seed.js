@@ -20,7 +20,7 @@ const seedData = async () => {
       {
         name: 'Admin User',
         employeeId: 'EMP001',
-        email: 'admin@roomify.com',
+        email: 'admin@campusspace.com',
         password: 'admin123',
         role: 'admin',
         status: 'active'
@@ -28,7 +28,7 @@ const seedData = async () => {
       {
         name: 'Approver User',
         employeeId: 'EMP002',
-        email: 'approver@roomify.com',
+        email: 'approver@campusspace.com',
         password: 'approver123',
         role: 'approver',
         status: 'active'
@@ -36,7 +36,7 @@ const seedData = async () => {
       {
         name: 'Requester One',
         employeeId: 'EMP003',
-        email: 'requester1@roomify.com',
+        email: 'requester1@campusspace.com',
         password: 'requester123',
         role: 'requester',
         status: 'active'
@@ -44,7 +44,7 @@ const seedData = async () => {
       {
         name: 'Requester Two',
         employeeId: 'EMP004',
-        email: 'requester2@roomify.com',
+        email: 'requester2@campusspace.com',
         password: 'requester123',
         role: 'requester',
         status: 'active'
@@ -101,10 +101,10 @@ const seedData = async () => {
 
     console.log('\nSeed completed successfully!');
     console.log('\nDemo Credentials:');
-    console.log('Admin: admin@roomify.com / admin123');
-    console.log('Approver: approver@roomify.com / approver123');
-    console.log('Requester 1: requester1@roomify.com / requester123');
-    console.log('Requester 2: requester2@roomify.com / requester123');
+    console.log('Admin: admin@campusspace.com / admin123');
+    console.log('Approver: approver@campusspace.com / approver123');
+    console.log('Requester 1: requester1@campusspace.com / requester123');
+    console.log('Requester 2: requester2@campusspace.com / requester123');
 
     process.exit(0);
   } catch (error) {

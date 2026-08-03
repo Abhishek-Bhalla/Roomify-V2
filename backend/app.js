@@ -38,7 +38,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use((req, res) => {
-  res.status(404).json({ success: true, message: 'Roomify Backend API is running' });
+  res.status(404).json({ success: true, message: 'CampusSpace Backend API is running' });
 });
 
 app.use((err, req, res, next) => {

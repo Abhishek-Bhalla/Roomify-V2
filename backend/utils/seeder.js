@@ -38,13 +38,13 @@ const seedData = async () => {
 
     // Create Users
     const users = await User.create([
-      { employeeId: 'EMP001', name: 'Admin User', email: 'admin@roomify.com', password: 'admin123', role: 'admin', status: 'active' },
-      { employeeId: 'EMP002', name: 'Approver User', email: 'approver@roomify.com', password: 'approver123', role: 'approver', status: 'active' },
-      { employeeId: 'EMP003', name: 'Requester User', email: 'requester@roomify.com', password: 'requester123', role: 'requester', status: 'active' },
-      { employeeId: 'EMP004', name: 'John Smith', email: 'john@roomify.com', password: 'john123', role: 'requester', status: 'active' },
-      { employeeId: 'EMP005', name: 'Sarah Johnson', email: 'sarah@roomify.com', password: 'sarah123', role: 'requester', status: 'active' },
-      { employeeId: 'EMP006', name: 'Mike Wilson', email: 'mike@roomify.com', password: 'mike123', role: 'requester', status: 'active' },
-      { employeeId: 'EMP007', name: 'Emily Brown', email: 'emily@roomify.com', password: 'emily123', role: 'requester', status: 'active' }
+      { employeeId: 'EMP001', name: 'Admin User', email: 'admin@campusspace.com', password: 'admin123', role: 'admin', status: 'active' },
+      { employeeId: 'EMP002', name: 'Approver User', email: 'approver@campusspace.com', password: 'approver123', role: 'approver', status: 'active' },
+      { employeeId: 'EMP003', name: 'Requester User', email: 'requester@campusspace.com', password: 'requester123', role: 'requester', status: 'active' },
+      { employeeId: 'EMP004', name: 'John Smith', email: 'john@campusspace.com', password: 'john123', role: 'requester', status: 'active' },
+      { employeeId: 'EMP005', name: 'Sarah Johnson', email: 'sarah@campusspace.com', password: 'sarah123', role: 'requester', status: 'active' },
+      { employeeId: 'EMP006', name: 'Mike Wilson', email: 'mike@campusspace.com', password: 'mike123', role: 'requester', status: 'active' },
+      { employeeId: 'EMP007', name: 'Emily Brown', email: 'emily@campusspace.com', password: 'emily123', role: 'requester', status: 'active' }
     ]);
     console.log('Users created:', users.length);
 
@@ -178,13 +178,13 @@ const seedData = async () => {
     console.log('Bookings created:', bookings.length);
 
     console.log('\n--- Demo Credentials ---');
-    console.log('Admin: admin@roomify.com / admin123');
-    console.log('Approver: approver@roomify.com / approver123');
-    console.log('Requester: requester@roomify.com / requester123');
-    console.log('John: john@roomify.com / john123');
-    console.log('Sarah: sarah@roomify.com / sarah123');
-    console.log('Mike: mike@roomify.com / mike123');
-    console.log('Emily: emily@roomify.com / emily123');
+    console.log('Admin: admin@campusspace.com / admin123');
+    console.log('Approver: approver@campusspace.com / approver123');
+    console.log('Requester: requester@campusspace.com / requester123');
+    console.log('John: john@campusspace.com / john123');
+    console.log('Sarah: sarah@campusspace.com / sarah123');
+    console.log('Mike: mike@campusspace.com / mike123');
+    console.log('Emily: emily@campusspace.com / emily123');
 
     console.log('\n--- Room IDs ---');
     rooms.forEach(room => {
