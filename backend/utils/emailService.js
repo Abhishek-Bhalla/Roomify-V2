@@ -62,12 +62,21 @@ const getFromAddress = () => {
     }
     return configured;
   }
-  return (process.env.BREVO_USER || process.env.EMAIL_USER || 'noreply@roomify.com').trim();
+  return (process.env.BREVO_USER || process.env.EMAIL_USER || 'noreply@campus-space.app').trim();
 };
 
-// Send email using Resend → SendGrid → Brevo SMTP → Gmail SMTP (in that order).
-// HTTPS-based providers run first because they're never blocked by cloud egress rules.
-// SMTP fallbacks only kick in if all HTTP providers fail.
+// Send email via the configured provider chain.
+//
+// Default priority: Resend → SendGrid → Brevo SMTP → Gmail SMTP.
+// HTTPS providers run first because they're never blocked by cloud egress.
+//
+// For presentations / demo days where you want to lock to a single
+// stable provider (today: Gmail SMTP ~500/day from a personal Gmail),
+// set EMAIL_PROVIDER=gmail on Railway. The chain then short-circuits
+// straight to Gmail and ignores Resend/SendGrid/Brevo entirely.
+//
+// If EMAIL_PROVIDER is unset and Resend is also unset but Gmail is set,
+// Gmail is auto-promoted to the top — same effect, no flag needed.
 const sendEmail = async (to, templateName, data) => {
   const hasResend = !!process.env.RESEND_API_KEY;
   const hasSendGrid = !!process.env.SENDGRID_API_KEY;
@@ -79,13 +88,28 @@ const sendEmail = async (to, templateName, data) => {
     return { success: false, reason: 'Email not configured' };
   }
 
+  // Operator override: force a single provider.
+  const forced = (process.env.EMAIL_PROVIDER || '').toLowerCase().trim();
+  if (forced && !['resend', 'sendgrid', 'brevo', 'gmail'].includes(forced)) {
+    console.warn(`📧 Unknown EMAIL_PROVIDER="${forced}" — ignoring, using default chain`);
+  }
+  const useOnlyGmail = forced === 'gmail' || (!forced && !hasResend && !hasSendGrid && !hasBrevo && hasGmail);
+
+  if (useOnlyGmail) {
+    if (!hasGmail) {
+      console.error(`📧 EMAIL_PROVIDER=gmail set but EMAIL_USER/EMAIL_PASS missing`);
+      return { success: false, error: 'Gmail not configured' };
+    }
+    return sendViaGmail(to, templateName, data);
+  }
+
   const template = emailTemplates[templateName](data);
   const fromAddress = getFromAddress();
-  const displayName = process.env.EMAIL_FROM_NAME || 'Roomify System';
+  const displayName = process.env.EMAIL_FROM_NAME || 'CampusSpace System';
   const fromHeader = `"${displayName}" <${fromAddress}>`;
 
   // Priority 1: Resend HTTPS API — never blocked by Railway/firewall rules.
-  if (hasResend && resend) {
+  if (hasResend && resend && forced !== 'gmail') {
     try {
       const result = await resend.emails.send({
         from: fromHeader,
@@ -102,7 +126,7 @@ const sendEmail = async (to, templateName, data) => {
   }
 
   // Priority 2: SendGrid HTTPS API.
-  if (hasSendGrid) {
+  if (hasSendGrid && forced !== 'gmail') {
     try {
       const msg = {
         to,
@@ -126,7 +150,7 @@ const sendEmail = async (to, templateName, data) => {
   }
 
   // Priority 3: Brevo SMTP.
-  if (hasBrevo) {
+  if (hasBrevo && forced !== 'gmail') {
     try {
       const info = await getSmtpTransporter().sendMail({
         from: fromHeader,
@@ -141,8 +165,22 @@ const sendEmail = async (to, templateName, data) => {
     }
   }
 
-  // Priority 4: Gmail SMTP — last resort.
+  // Priority 4: Gmail SMTP.
   if (hasGmail) {
+    return sendViaGmail(to, templateName, data);
+  }
+
+  return { success: false, error: 'All providers failed' };
+};
+
+// Shared Gmail sender — used both as the chain's last resort and as the
+// single-provider path when EMAIL_PROVIDER=gmail (or auto-promoted).
+const sendViaGmail = async (to, templateName, data) => {
+  const template = emailTemplates[templateName](data);
+  const fromAddress = getFromAddress();
+  const displayName = process.env.EMAIL_FROM_NAME || 'CampusSpace System';
+  const fromHeader = `"${displayName}" <${fromAddress}>`;
+  try {
     const info = await getSmtpTransporter().sendMail({
       from: fromHeader,
       to,
@@ -151,9 +189,10 @@ const sendEmail = async (to, templateName, data) => {
     });
     console.log(`📧 Email sent via Gmail SMTP: ${templateName} to ${to} from=${fromAddress} (id=${info.messageId})`);
     return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`📧 Gmail SMTP failed: ${error.message}`);
+    return { success: false, error: error.message };
   }
-
-  return { success: false, error: 'All providers failed' };
 };
 
 // Email templates
@@ -178,7 +217,7 @@ const emailTemplates = {
         <p>You will receive an email notification once your booking is approved or rejected.</p>
 
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-        <p style="color: #6b7280; font-size: 12px;">Roomify - College Room Booking System</p>
+        <p style="color: #6b7280; font-size: 12px;">CampusSpace - College Room Booking System</p>
       </div>
     `
   }),
@@ -203,7 +242,7 @@ const emailTemplates = {
         <p>Please arrive on time. If you need to cancel, do so at least 1 hour before the booking time.</p>
 
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-        <p style="color: #6b7280; font-size: 12px;">Roomify - College Room Booking System</p>
+        <p style="color: #6b7280; font-size: 12px;">CampusSpace - College Room Booking System</p>
       </div>
     `
   }),
@@ -229,7 +268,7 @@ const emailTemplates = {
         <p>Please contact the administrator for more details or submit a new booking request.</p>
 
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-        <p style="color: #6b7280; font-size: 12px;">Roomify - College Room Booking System</p>
+        <p style="color: #6b7280; font-size: 12px;">CampusSpace - College Room Booking System</p>
       </div>
     `
   }),
@@ -253,7 +292,7 @@ const emailTemplates = {
         <p>Please make your way to the room. See you soon!</p>
 
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-        <p style="color: #6b7280; font-size: 12px;">Roomify - College Room Booking System</p>
+        <p style="color: #6b7280; font-size: 12px;">CampusSpace - College Room Booking System</p>
       </div>
     `
   }),
@@ -276,10 +315,10 @@ const emailTemplates = {
           <p>👤 <strong>Requested By:</strong> ${data.requesterName} (${data.requesterEmail})</p>
         </div>
 
-        <p>Please login to the Roomify system to approve or reject this request.</p>
+        <p>Please login to the CampusSpace system to approve or reject this request.</p>
 
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-        <p style="color: #6b7280; font-size: 12px;">Roomify - College Room Booking System</p>
+        <p style="color: #6b7280; font-size: 12px;">CampusSpace - College Room Booking System</p>
       </div>
     `
   }),
@@ -315,7 +354,7 @@ const emailTemplates = {
         <p style="color: #6b7280; font-size: 14px;">It only takes a minute! Your feedback helps us serve you better.</p>
 
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-        <p style="color: #6b7280; font-size: 12px;">Roomify - College Room Booking System</p>
+        <p style="color: #6b7280; font-size: 12px;">CampusSpace - College Room Booking System</p>
       </div>
     `
   })
